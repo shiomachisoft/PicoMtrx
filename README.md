@@ -41,7 +41,7 @@
   - ⇒「MTRX」画面が表示される。
 - ⑥「Open mtrx file」ボタンを押してからsample.mtrxを選択するとドットマトリクスLEDにサンプル動画が表示される。
 
-## 8. mtrxファイルの作成の仕方
+## 8. mtrxファイルの作成方法
 
 - 「Convert mp4 to mtrx file」を押してからmp4ファイルを選択する。
   - ⇒mp4ファイルと同じフォルダにmtrxファイルが作成される。
