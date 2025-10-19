@@ -180,7 +180,7 @@ void RGBMatrixDeviceFlush(uint8_t *buf)
 
     STB_HIGH;
     NOP;
-    busy_wait_us(1);
+    busy_wait_us(20);
     STB_LOW;
 	OE_LOW;
 
