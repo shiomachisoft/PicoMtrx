@@ -15,7 +15,8 @@
 ## 3. WAVESHARE-20591の仕様
 
 - 64×32ドット
-- RGB各2階調   
+- RGB各2階調
+- Picoを装着できる
    
 ## 4. FWの仕様
 
@@ -33,13 +34,14 @@
 
 ## 7. 使い方
 
-- ①WAVESHARE-20591とPCをUSBケーブルで接続する。
-- ②WAVESHARE-20591の電源スイッチをONにする。
-- ③PicoMtrxApp.exeを起動する。
-- ④PicoのCOM番号を選択してから「connect」ボタンを押す。
-- ⑤「MTRX」ボタンを押す。
+- ①WAVESHARE-20591にPicoを装着する。
+- ②WAVESHARE-20591とPCをUSBケーブルで接続する。
+- ③WAVESHARE-20591の電源スイッチをONにする。
+- ④PicoMtrxApp.exeを起動する。
+- ⑤PicoのCOM番号を選択してから「connect」ボタンを押す。
+- ⑥「MTRX」ボタンを押す。
   - ⇒「MTRX」画面が表示される。
-- ⑥「Open mtrx file」ボタンを押してからsample.mtrxを選択するとドットマトリクスLEDにサンプル動画が表示される。
+- ⑦「Open mtrx file」ボタンを押してからsample.mtrxを選択するとドットマトリクスLEDにサンプル動画が表示される。
 
 ## 8. mtrxファイルの作成方法
 
