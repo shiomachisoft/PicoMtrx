@@ -3,7 +3,7 @@
 ## 1.概要
 
 - ドットマトリクスLED(WAVESHARE-20591)にmp4ファイルの動画データを表示するPicoのFWとPCアプリです。
-- [YouTube](https://www.youtube.com/watch?v=6pqWSa0Veto)
+- [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
 
 ## 2. 動作環境
 
