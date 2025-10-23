@@ -11,7 +11,7 @@
 - ドットマトリクスLED：WAVESHARE-20591
 - PC
   - OS：Windows11またはWindows10
-    - ※Windows10の場合、.NET Framework 4.X(4.6.2以上)がインストールされている必要がある。
+    - ※.NET Framework 4.X(4.6.2以上)がインストールされている必要がある。(Windows11はデフォルトでこの条件を満たす。)
   
 ## 3. WAVESHARE-20591の仕様
 
