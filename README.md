@@ -23,17 +23,20 @@
 
 - 画面のリフレッシュレート：30Hz
 
-## 5. PCアプリのインストール手順
+## 5. システム構成
+<img width="538" height="244" alt="image" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
+
+## 6. PCアプリのインストール手順
 
 - ①PicoMtrxAppフォルダをPCの適当なフォルダにコピーする。
 
-## 6. FWの書き込み手順
+## 7. FWの書き込み手順
 
 - ①Pico上の白いボタンを押したままの状態で、PicoとPCをUSBケーブルで接続する。
 - ②Windowsが「RPI-RP2」という名前のUSBドライブを認識したら、白いボタンを離す。
 - ③PicoMtrx.uf2を「RPI-RP2」ドライブにドラッグする。
 
-## 7. 使い方
+## 8. 使い方
 
 - ①WAVESHARE-20591にPicoを装着する。
 - ②WAVESHARE-20591とPCをUSBケーブルで接続する。
@@ -44,7 +47,7 @@
   - ⇒「MTRX」画面が表示される。
 - ⑦「Open mtrx file」ボタンを押してからsample.mtrxを選択するとドットマトリクスLEDにサンプル動画が表示される。
 
-## 8. mtrxファイルの作成方法
+## 9. mtrxファイルの作成方法
 
 - 「Convert mp4 to mtrx file」を押してからmp4ファイルを選択する。
   - ⇒mp4ファイルと同じフォルダにmtrxファイルが作成される。
@@ -53,10 +56,10 @@
 - 4K動画、HD動画、時間の長い動画はmtrxファイルの作成に時間がかかる。
 - WAVESHARE-20591のドット数や色の諧調が少ないため、シンプルな絵の動画が推奨される。
 
-## 9. ソースコード
+## 10. ソースコード
 FWとPCアプリの両方ともソースコードを公開しています。  
 - FWは、C言語とPico SDKで作成しています。
 - PCアプリは、C#で作成しています。
 
-## 10. 利用規約
+## 11. 利用規約
 - [利用規約](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)
