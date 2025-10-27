@@ -59,7 +59,7 @@
 ## 10. ソースコード
 FWとPCアプリの両方ともソースコードを公開しています。  
 - FWは、C言語とPico SDKで作成しています。
-- PCアプリは、C#で作成しています。
+- PCアプリは、Visual StudioでC#で作成しています。
 
 ## 11. 利用規約
 - [利用規約](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)
