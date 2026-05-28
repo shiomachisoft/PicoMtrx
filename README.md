@@ -26,7 +26,7 @@
 
 ## システム構成
 
-<img width="538" height="244" alt="システム構成図" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
+<img width="1076" height="488" alt="システム構成図" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
 
 ---
 
