@@ -1,65 +1,79 @@
 # PicoMtrx
 
-## 1.概要
+ドットマトリクスLED (WAVESHARE-20591) にmp4ファイルの動画データを表示するための、Raspberry Pi Pico用ファームウェア（FW）とPC向けアプリです。
 
-- ドットマトリクスLED(WAVESHARE-20591)にmp4ファイルの動画データを表示するPicoのFWとPCアプリです。
-- [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
+🎥 **デモ動画:** [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
 
-## 2. 動作環境
+---
 
-- マイコン基板：Raspberry Pi Pico 
-- ドットマトリクスLED：WAVESHARE-20591
-- PC
-  - OS：Windows11またはWindows10
-    - ※.NET Framework 4.X(4.6.2以上)がインストールされている必要がある。(Windows11はデフォルトでこの条件を満たす。)
-  
-## 3. WAVESHARE-20591の仕様
+## 動作環境
 
-- 64×32ドット
-- RGB各2階調
-- Picoを装着可能
-   
-## 4. FWの仕様
+*   **マイコン基板:** Raspberry Pi Pico
+*   **ドットマトリクスLED:** WAVESHARE-20591
+*   **PC (OS):** Windows 11 または Windows 10
+    *   ※必須要件: .NET Framework 4.X (4.6.2以上) がインストールされていること。（Windows 11は標準でこの条件を満たしています）。
+    *   **※注意:** .NET 5以降はサポート対象外となりますのでご注意ください。
 
-- 画面のリフレッシュレート：30Hz
+## 仕様
 
-## 5. システム構成
-<img width="538" height="244" alt="image" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
+### WAVESHARE-20591 の仕様
+*   **解像度:** 64×32ドット
+*   **色表現:** RGB各2階調
+*   **特徴:** Picoを直接装着可能
 
-## 6. PCアプリのインストール手順
+### FW（ファームウェア）の仕様
+*   **画面リフレッシュレート:** 30Hz
 
-- ①PicoMtrxAppフォルダをPCの適当なフォルダにコピーする。
+## システム構成
 
-## 7. FWの書き込み手順
+<img width="538" height="244" alt="システム構成図" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
 
-- ①Pico上の白いボタンを押したままの状態で、PicoとPCをUSBケーブルで接続する。
-- ②Windowsが「RPI-RP2」という名前のUSBドライブを認識したら、白いボタンを離す。
-- ③PicoMtrx.uf2を「RPI-RP2」ドライブにドラッグする。
+---
 
-## 8. 使い方
+## 導入手順
 
-- ①WAVESHARE-20591にPicoを装着する。
-- ②WAVESHARE-20591とPCをUSBケーブルで接続する。
-- ③WAVESHARE-20591の電源スイッチをONにする。
-- ④PicoMtrxApp.exeを起動する。
-- ⑤PicoのCOM番号を選択してから「connect」ボタンを押す。
-- ⑥「MTRX」ボタンを押す。
-  - ⇒「MTRX」画面が表示される。
-- ⑦「Open mtrx file」ボタンを押してからsample.mtrxを選択するとドットマトリクスLEDにサンプル動画が表示される。
+### 1. PCアプリのインストール
+1. `PicoMtrxApp` フォルダを、PC内の任意のフォルダにコピーします。
 
-## 9. mtrxファイルの作成方法
+### 2. FWの書き込み手順
+1. Pico上の白いボタンを押したままの状態で、PicoとPCをUSBケーブルで接続します。
+2. Windowsが「RPI-RP2」という名前のUSBドライブを認識したら、白いボタンを離します。
+3. 同梱の `PicoMtrx.uf2` を、「RPI-RP2」ドライブにドラッグ＆ドロップします。
 
-- 「Convert mp4 to mtrx file」を押してからmp4ファイルを選択する。
-  - ⇒mp4ファイルと同じフォルダにmtrxファイルが作成される。
+---
 
-※注意
-- 4K動画、HD動画、時間の長い動画はmtrxファイルの作成に時間がかかる。
-- WAVESHARE-20591のドット数や色の諧調が少ないため、シンプルな絵の動画が推奨される。
+## 使い方
 
-## 10. ソースコード
-FWとPCアプリの両方ともソースコードを公開しています。  
-- FWは、C言語とPico SDKで作成しています。
-- PCアプリは、Visual StudioでC#で作成しています。
+1. WAVESHARE-20591にPicoを装着します。
+2. WAVESHARE-20591とPCをUSBケーブルで接続します。
+3. WAVESHARE-20591の電源スイッチをONにします。
+4. PC側で `PicoMtrxApp.exe` を起動します。
+5. 画面上でPicoのCOM番号を選択し、「connect」ボタンを押します。
+6. 「MTRX」ボタンを押すと、「MTRX」画面が表示されます。
+7. 「Open mtrx file」ボタンを押してから `sample.mtrx` を選択すると、ドットマトリクスLEDにサンプル動画が表示されます。
 
-## 11. 利用規約
-- [利用規約](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)
+---
+
+## mtrxファイルの作成方法
+
+ご自身のmp4動画から専用の動画ファイルを作成できます。
+
+1. アプリ上で「Convert mp4 to mtrx file」ボタンを押し、変換したいmp4ファイルを選択します。
+2. mp4ファイルと同じフォルダ内に `.mtrx` ファイルが作成されます。
+
+> **⚠️ 注意事項**
+> *   4K動画、HD動画、または時間の長い動画は、mtrxファイルの作成処理に時間がかかります。
+> *   WAVESHARE-20591はドット数や色の階調が限られているため、シンプルな絵の動画を推奨します。
+
+---
+
+## ソースコード
+
+FWとPCアプリ、両方のソースコードを公開しています。
+*   **FW:** C言語 および Pico SDK で作成。
+*   **PCアプリ:** Visual Studio にて C# で作成。
+
+## 利用規約
+
+ご使用前に以下の利用規約をご確認ください。
+*   [利用規約を確認する](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)
