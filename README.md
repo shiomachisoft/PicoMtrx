@@ -1,6 +1,6 @@
 # PicoMtrx
 
-ドットマトリクスLED (WAVESHARE-20591) にmp4ファイルの動画データを表示するための、Raspberry Pi Pico用ファームウェア（FW）とPC向けアプリです。
+ドットマトリクスLED (WAVESHARE-20591) にmp4ファイルの動画データを表示するための、Raspberry Pi Pico用ファームウェアとPC向けアプリです。
 
 🎥 **デモ動画:** [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
 
