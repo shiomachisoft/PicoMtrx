@@ -2,7 +2,10 @@
 
 Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video data on a dot matrix LED (WAVESHARE-20591).
 
-**Demo Video:** [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
+**Demo Video:**<br>
+<a href="https://www.youtube.com/watch?v=Xb-uuDCgQQs">
+  <img src="https://img.youtube.com/vi/Xb-uuDCgQQs/maxresdefault.jpg" alt="Demo Video" width="600">
+</a>
 
 ---
 
