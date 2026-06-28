@@ -38,8 +38,6 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 2. Release the white button once Windows recognizes the USB drive named "RPI-RP2".
 3. Drag and drop the included "PicoMtrx.uf2" file into the "RPI-RP2" drive.
 
----
-
 ## Usage
 
 1. Attach the Pico to the WAVESHARE-20591.
@@ -48,8 +46,6 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 4. Launch "PicoMtrxApp.exe" on the PC.
 5. Select the Pico's COM port number on the screen and click the "connect" button.
 6. Click the "Open mtrx file" button and select "sample.mtrx" to display the sample video on the dot matrix LED.
-
----
 
 ## How to Create an mtrx File
 
@@ -60,8 +56,6 @@ You can create a dedicated video file from your own mp4 video.
 
 > **Note**
 > * Since the WAVESHARE-20591 has limited dot count and color depth, videos with simple graphics are recommended.
-
----
 
 ## Source Code
 
