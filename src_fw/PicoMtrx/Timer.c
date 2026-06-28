@@ -9,8 +9,8 @@
 // [ファイルスコープ変数の宣言]
 static repeating_timer_t f_stTimer = {0};           // 1ms定期タイマコールバック登録時に渡すパラメータ
 static repeating_timer_t f_stTimer_Refresh = {0};   // 画面リフレッシュレートのタイマコールバック登録時に渡すパラメータ
-static ULONG f_timerCnt_recvTimeout = 0;            // 右記のタイマカウント:要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとする
-uint64_t g_timerCnt_refresh  = 0;                   // 画面リフレッシュ回数
+static volatile ULONG f_timerCnt_recvTimeout = 0;   // 要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとするタイマカウント
+static volatile uint64_t f_timerCnt_refresh = 0;    // 画面リフレッシュ回数
 
 // [関数プロトタイプ宣言]
 static bool TMR_PeriodicCallback(repeating_timer_t *rt);
@@ -19,7 +19,7 @@ static bool TMR_PeriodicCallback_Refresh(repeating_timer_t *rt);
 // 1ms定期タイマコールバック
 static bool TMR_PeriodicCallback(repeating_timer_t *pstTimer) 
 {
-    // 右記のタイマカウント:要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとする
+    // タイムアウト監視用タイマカウントの更新
     if (f_timerCnt_recvTimeout < TMR_RECV_TIMEOUT) {
         f_timerCnt_recvTimeout++;
     }
@@ -30,34 +30,39 @@ static bool TMR_PeriodicCallback(repeating_timer_t *pstTimer)
 // 画面リフレッシュレートのタイマコールバック
 static bool TMR_PeriodicCallback_Refresh(repeating_timer_t *pstTimer) 
 {
-    g_timerCnt_refresh++;    
+    f_timerCnt_refresh++;    
 
     return true; // keep repeating 
 }
 
 // 画面リフレッシュ回数の取得
-uint64_t TMR_GetRefreshCnt()
+uint64_t TMR_GetRefreshCnt(void)
 {
-    return g_timerCnt_refresh;
+    uint64_t val1, val2;
+    do {
+        val1 = f_timerCnt_refresh;
+        val2 = f_timerCnt_refresh;
+    } while (val1 != val2);
+    return val1;
 }
 
-// 右記のタイマカウントをクリア:要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとする
-void TMR_ClearRecvTimeout()
+// 要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとするタイマカウントをクリア
+void TMR_ClearRecvTimeout(void)
 {
     f_timerCnt_recvTimeout = 0;
 }
 
-// 右記のタイムアウトか否かを取得:要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとする
-bool TMR_IsRecvTimeout()
+// 要求フレームのヘッダを受信後、TMR_RECV_TIMEOUT[ms]経過しても要求フレームの末尾まで受信してない場合はタイムアウトとするか否かを取得
+bool TMR_IsRecvTimeout(void)
 {
     return (f_timerCnt_recvTimeout >= TMR_RECV_TIMEOUT) ? true : false;
 }
 
 // タイマーを初期化
-void TMR_Init()
+void TMR_Init(void)
 {
     // 1ms定期タイマコールバックの登録
     add_repeating_timer_ms(TMR_CALLBACK_PERIOD, TMR_PeriodicCallback, NULL, &f_stTimer);
-    //  画面リフレッシュレートのタイマコールバックの登録
+    // 画面リフレッシュレートのタイマコールバックの登録
     add_repeating_timer_us(TMR_CALLBACK_PERIOD_REFRESH, TMR_PeriodicCallback_Refresh, NULL, &f_stTimer_Refresh);
 }

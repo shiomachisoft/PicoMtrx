@@ -1,4 +1,4 @@
-﻿// Copyright © 2024 Shiomachi Software. All rights reserved.
+// Copyright © 2024 Shiomachi Software. All rights reserved.
 using System;
 using System.Threading.Tasks;
 using System.IO.Ports;
@@ -19,10 +19,6 @@ namespace JigLib
         /// ポートの出力バッファサイズ
         /// </summary>
         private const int PORT_WRITE_BUF_SIZE = (200 * 1024);
-        /// <summary>
-        /// ポートの入力バッファサイズ
-        /// </summary>
-        //private const int PORT_READ_BUF_SIZE = 8192;
         /// <summary>
         /// ポート書き込みタイムアウト時間(ms)
         /// </summary>
@@ -49,82 +45,91 @@ namespace JigLib
         }
 
         /// <summary>
-        /// ポートをオープン
+        /// 回線に接続する（ポートをオープン）
         /// </summary>
-        public override string Connect(Object objPortName)
+        public override string Connect(string strPortName)
         {
             string strErrMsg = null;
+
+            // 既にオープンしている、または受信タスクが動いている場合は完全に切断処理を行う（タスクの多重起動を防ぐ）
+            Disconnect();
 
             lock (_lockPort) // ポートのアクセスの排他
             {
                 try
                 {
                     // ポートの通信設定
-                    _port.PortName = (string)objPortName;           // 通信ポート名
+                    _port.PortName = strPortName;                   // 通信ポート名
                     _port.BaudRate = PORT_BAUD_RATE;                // ボーレート
                     _port.DataBits = PORT_DATA_BITS;                // データビット長
                     _port.Parity = Parity.None;                     // パリティ無し
                     _port.StopBits = StopBits.One;                  // ストップビット = 1bit
                     _port.Handshake = Handshake.None;               // フロー制御無し
                     _port.WriteBufferSize = PORT_WRITE_BUF_SIZE;    // 出力バッファのサイズ
-                    //_port.ReadBufferSize = PORT_READ_BUF_SIZE;    // 入力バッファのサイズ
                     _port.WriteTimeout = PORT_WRITE_TIMEOUT;        // 書き込みタイムアウト時間
                     _port.ReadTimeout = PORT_READ_TIMEOUT;          // 読み取りタイムアウト時間
 
                     // ポートをオープン
                     _port.Open();
+
+                    _port.DtrEnable = true; // DTR = ON (例外リスクを考慮し try 内で実行)
                 }
                 catch (Exception ex)
                 {
                     strErrMsg = ex.Message;
                 }
-
                 if (strErrMsg == null)
                 {
                     // 受信タスクを開始
                     _isDisconnecting = false;
                     _tskRecv = new Task(Recv);
                     _tskRecv.Start();
-                    _port.DtrEnable = true; // DTR = ON 
-                    PrpConnectName = _port.PortName;
                     _isConnected = true;
                 }
             }
-        
+
             return strErrMsg;
         }
 
         /// <summary>
-        /// ポートをクローズ
+        /// 回線を切断する（ポートをクローズ）
         /// </summary>
         public override void Disconnect()
         {
+            // コマンド送信の応答待ちを中止する
+            PrpResEvent.Set();
+            _isDisconnecting = true;
+
+            if (_tskRecv != null)
+            {
+                // 受信タスクの終了を待つ（ポートをクローズする前に待つことでデッドロックを防止）
+                _tskRecv.Wait(RECV_TASK_END_TIMEOUT);
+                _tskRecv = null;
+            }
+
             lock (_lockPort) // ポートのアクセスの排他
             {
-                if (_tskRecv != null)
+                if (_port.IsOpen) // ポートがオープン済みの場合
                 {
-                    // コマンド送信の応答待ちを中止する
-                    PrpResEvent.Set(); 
-                    _isDisconnecting = true;
-                    // 受信タスクの終了を待つ
-                    _tskRecv.Wait(RECV_TASK_END_TIMEOUT);
-                    _tskRecv = null;
-                    if (_port.IsOpen) // ポートがオープン済みの場合
+                    try
                     {
-                        try
-                        {
-                            // ポートをクローズ
-                            _port.Close();
-                        }
-                        catch { }
+                        _port.DtrEnable = false;
                     }
-                    _isConnected = false;
+                    catch { }
+
+                    try
+                    {
+                        // ポートをクローズ
+                        _port.Close();
+                    }
+                    catch { }
                 }
+                _isConnected = false;
             }
         }
-        
+
         /// <summary>
-        /// ポートがオープン済みか否かを取得
+        /// 回線に接続済みか否かを取得（ポートのオープン状態を確認）
         /// </summary>
         public override bool IsConnected()
         {
@@ -139,14 +144,14 @@ namespace JigLib
                         bRet = _port.IsOpen;
                     }
                     catch { }
-                }    
+                }
             }
 
             return bRet;
         }
 
         /// <summary>
-        /// シリアル送信
+        /// 送信（シリアル送信）
         /// </summary>
         protected override string Send(byte[] buf)
         {
@@ -171,32 +176,29 @@ namespace JigLib
                     }
                 }
             }
-        
+
             return strErrMsg;
         }
 
         /// <summary>
         /// シリアル受信データが存在するかを確認
         /// </summary>
-        protected override bool IsExistRecvData()
+        protected override bool HasRecvData()
         {
             bool bRet = false;
             int readSize = 0;
 
-            lock (_lockPort) // ポートのアクセスの排他
+            try
             {
-                try
+                if (_port.IsOpen)
                 {
-                    if (_port.IsOpen)
-                    {
-                        readSize = _port.BytesToRead;
-                    }
+                    readSize = _port.BytesToRead;
                 }
-                catch { }
-                if (readSize > 0)
-                {
-                    bRet = true;
-                }
+            }
+            catch { }
+            if (readSize > 0)
+            {
+                bRet = true;
             }
 
             return bRet;
@@ -212,25 +214,18 @@ namespace JigLib
 
             data = 0;
 
-            lock (_lockPort) // ポートのアクセスの排他
+            try
             {
-                try
+                if (_port.IsOpen)
                 {
-                    if (_port.IsOpen)
-                    {
-                        try
-                        {
-                            readData = _port.ReadByte();
-                        }
-                        catch { };
-                    }
+                    readData = _port.ReadByte();
                 }
-                catch { }
-                if (readData >= 0)
-                {
-                    data = (byte)readData;
-                    bRet = true;
-                }
+            }
+            catch { }
+            if (readData >= 0)
+            {
+                data = (byte)readData;
+                bRet = true;
             }
 
             return bRet;

@@ -11,8 +11,16 @@ typedef struct _ST_MTRX_DATA {
 } ST_MTRX_DATA;
 
 // [関数プロトタイプ宣言]
-void MTRX_Init();
-void MTRX_Main();
-void MTRX_InitQueue();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void MTRX_Init(void);
+void MTRX_Main(void);
+void MTRX_InitQueue(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -5,9 +5,17 @@
 #include "Common.h"
 
 // [関数プロトタイプ宣言] 
-uint64_t TMR_GetRefreshCnt();
-void TMR_ClearRecvTimeout();
-bool TMR_IsRecvTimeout();
-void TMR_Init();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint64_t TMR_GetRefreshCnt(void);
+void TMR_ClearRecvTimeout(void);
+bool TMR_IsRecvTimeout(void);
+void TMR_Init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

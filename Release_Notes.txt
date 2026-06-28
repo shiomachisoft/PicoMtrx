@@ -1,0 +1,5 @@
+- 20260627
+Increased LED matrix brightness and made various other improvements.
+
+- 20251019
+First release

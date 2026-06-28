@@ -1,79 +1,77 @@
 # PicoMtrx
 
-ドットマトリクスLED (WAVESHARE-20591) にmp4ファイルの動画データを表示するための、Raspberry Pi Pico用ファームウェアとPC向けアプリです。
+Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video data on a dot matrix LED (WAVESHARE-20591).
 
-🎥 **デモ動画:** [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
-
----
-
-## 動作環境
-
-*   **マイコン基板:** Raspberry Pi Pico
-*   **ドットマトリクスLED:** WAVESHARE-20591
-*   **PC (OS):** Windows 11 または Windows 10
-    *   ※必須要件: .NET Framework 4.X (4.6.2以上) がインストールされていること。（Windows 11は標準でこの条件を満たしています）。
-    *   **※注意:** .NET 5以降はサポート対象外となりますのでご注意ください。
-
-## 仕様
-
-### WAVESHARE-20591 の仕様
-*   **解像度:** 64×32ドット
-*   **色表現:** RGB各2階調
-*   **特徴:** Picoを直接装着可能
-
-### FW（ファームウェア）の仕様
-*   **画面リフレッシュレート:** 30Hz
-
-## システム構成
-
-<img width="1076" height="488" alt="システム構成図" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
+**Demo Video:** [YouTube](https://www.youtube.com/watch?v=Xb-uuDCgQQs)
 
 ---
 
-## 導入手順
+## Operating Environment
 
-### 1. PCアプリのインストール
-1. `PicoMtrxApp` フォルダを、PC内の任意のフォルダにコピーします。
+* **Microcontroller Board:** Raspberry Pi Pico
+* **Dot Matrix LED:** WAVESHARE-20591
+* **PC (OS):** Windows 11 or Windows 10
+  * Requirement: .NET Framework 4.X (4.6.2 or later) must be installed. (Windows 11 meets this requirement by default.)
+  * **Note:** .NET 5 and later versions are not supported.
 
-### 2. FWの書き込み手順
-1. PicoのBOOTSELボタンを押したままの状態で、PicoとPCをUSBケーブルで接続します。
-2. Windowsが「RPI-RP2」という名前のUSBドライブを認識したら、白いボタンを離します。
-3. 同梱の `PicoMtrx.uf2` を、「RPI-RP2」ドライブにドラッグ＆ドロップします。
+## Specifications
 
----
+### WAVESHARE-20591 Specifications
+* **Resolution:** 64x32 dots
+* **Color Depth:** 2 levels per RGB channel
+* **Feature:** Pico can be attached directly
 
-## 使い方
+### FW (Firmware) Specifications
+* **Screen Refresh Rate:** 30Hz
 
-1. WAVESHARE-20591にPicoを装着します。
-2. WAVESHARE-20591とPCをUSBケーブルで接続します。
-3. WAVESHARE-20591の電源スイッチをONにします。
-4. PC側で `PicoMtrxApp.exe` を起動します。
-5. 画面上でPicoのCOM番号を選択し、「connect」ボタンを押します。
-6. 「MTRX」ボタンを押すと、「MTRX」画面が表示されます。
-7. 「Open mtrx file」ボタンを押してから `sample.mtrx` を選択すると、ドットマトリクスLEDにサンプル動画が表示されます。
+## System Architecture
 
----
-
-## mtrxファイルの作成方法
-
-ご自身のmp4動画から専用の動画ファイルを作成できます。
-
-1. アプリ上で「Convert mp4 to mtrx file」ボタンを押し、変換したいmp4ファイルを選択します。
-2. mp4ファイルと同じフォルダ内に `.mtrx` ファイルが作成されます。
-
-> **⚠️ 注意事項**
-> *   4K動画、HD動画、または時間の長い動画は、mtrxファイルの作成処理に時間がかかります。
-> *   WAVESHARE-20591はドット数や色の階調が限られているため、シンプルな絵の動画を推奨します。
+<img width="1076" height="488" alt="System Architecture Diagram" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
 
 ---
 
-## ソースコード
+## Installation Procedure
 
-FWとPCアプリ、両方のソースコードを公開しています。
-*   **FW:** C言語 および Pico SDK で作成。
-*   **PCアプリ:** Visual Studio にて C# で作成。
+### 1. PC App Installation
+1. Copy the "PicoMtrxApp" folder to any directory on your PC.
 
-## 利用規約
+### 2. FW Flashing Procedure
+1. While holding down the BOOTSEL button on the Pico, connect the Pico and the PC with a USB cable.
+2. Release the white button once Windows recognizes the USB drive named "RPI-RP2".
+3. Drag and drop the included "PicoMtrx.uf2" file into the "RPI-RP2" drive.
 
-ご使用前に以下の利用規約をご確認ください。
-*   [利用規約を確認する](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)
+---
+
+## Usage
+
+1. Attach the Pico to the WAVESHARE-20591.
+2. Connect the WAVESHARE-20591 and the PC with a USB cable.
+3. Turn ON the power switch of the WAVESHARE-20591.
+4. Launch "PicoMtrxApp.exe" on the PC.
+5. Select the Pico's COM port number on the screen and click the "connect" button.
+6. Click the "Open mtrx file" button and select "sample.mtrx" to display the sample video on the dot matrix LED.
+
+---
+
+## How to Create an mtrx File
+
+You can create a dedicated video file from your own mp4 video.
+
+1. Click the "Convert mp4 to mtrx file" button in the app and select the mp4 file you want to convert.
+2. An ".mtrx" file will be created in the same folder as the mp4 file.
+
+> **Note**
+> * Since the WAVESHARE-20591 has limited dot count and color depth, videos with simple graphics are recommended.
+
+---
+
+## Source Code
+
+The source code for both the FW and the PC app is available.
+* **FW:** Written in C and Pico SDK.
+* **PC App:** Written in C# using Visual Studio.
+
+## Terms of Use
+
+Please check the following terms of use before using.
+* [Check Terms of Use](https://sites.google.com/view/shiomachisoft/%E5%88%A9%E7%94%A8%E8%A6%8F%E7%B4%84)

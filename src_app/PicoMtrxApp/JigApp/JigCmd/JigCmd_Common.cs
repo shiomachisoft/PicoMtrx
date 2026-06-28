@@ -1,4 +1,4 @@
-﻿// Copyright © 2024 Shiomachi Software. All rights reserved.
+// Copyright © 2024 Shiomachi Software. All rights reserved.
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -23,7 +23,7 @@ namespace JigLib
         /// 応答フレームの最大サイズ
         /// </summary>
         /// <remarks>
-        /// 応答フレームの方が通知フレームよりサイズが大きい
+        /// データ最大サイズ 1024バイト ＋ 固定ヘッダ・フッタ領域等 11バイト
         /// </remarks>
         protected const int FRM_RES_SIZE = FRM_DATA_MAX_SIZE + 11;
         /// <summary>
@@ -36,46 +36,16 @@ namespace JigLib
         protected const int FRM_RES_TIMEOUT = 10000;
 
         /// <summary>
-        ///フレームエンドタイムアウト(ms) 
+        /// フレームエンドタイムアウト(ms)
         /// </summary>
         /// <remarks>
-        /// 受信フレーム(応答/通知フレーム)のヘッダを受信後、フレームエンドタイムアウトの時間が経過してもそのフレームの末端を受信しなかった場合、そのフレームは破棄する
+        /// 受信フレーム(応答フレーム)のヘッダを受信後、フレームエンドタイムアウトの時間が経過してもそのフレームの末端を受信しなかった場合、そのフレームは破棄する
         /// </remarks>
         private const int FRM_END_TIMEOUT = 1000;
         /// <summary>
         /// Recv()のwhile文のディレイ(ms)
         /// </summary>
         private const int RECV_DELAY = 50;
-        /// <summary>
-        /// FWエラーメッセージ
-        /// </summary>
-        /// <remarks>
-        /// FWのソースのCommon.hのdefineに合わせる
-        /// </remarks>
-        private readonly string[] FW_ERR_MSG_ARY =
-        {
-            //"WDTタイムアウトでマイコンがリセットした。" ,
-            "The microcontroller was reset due to WDT timeout.",
-            "UART:Framing error",
-            "UART:Parity error",
-            "UART:Break error",
-            "UART:Overrun error",
-            "I2C:address not acknowledged, or, no device present.",
-            // I2C通信でタイムアウト
-            "Timeout in I2C communication",
-            // バッファに空きがないので要求データを破棄した(USB/無線送信)
-            "The requested data was discarded because there was no space in the buffer (USB/wireless transmission)",
-            // バッファに空きがないので要求データを破棄した(UART送信)
-            "The requested data was discarded because there was no space in the buffer (UART transmission)",
-            // バッファに空きがないので要求データを破棄した(UART受信)
-            "The requested data was discarded because there was no space in the buffer (UART reception)",
-            // バッファに空きがないので要求データを破棄した(I2C送信/受信)
-            "The requested data was discarded because there was no space in the buffer (I2C transmission/reception)",
-            // バッファに空きがないので要求データを破棄した(無線受信)
-            "Requested data was discarded because there was no space in the buffer (wireless reception)",
-            // 無線送信が失敗した
-            "Wireless transmission (BLE/TCP) failed."
-        };
 
         /// <summary>
         /// フレーム中のヘッダ部の定義
@@ -89,11 +59,7 @@ namespace JigLib
             /// <summary>
             /// 応答フレーム
             /// </summary>
-            RES,
-            /// <summary>
-            /// 通知フレーム(UART受信)
-            /// </summary>
-            NOTIFY_UART_RECV
+            RES
         }
 
         /// <summary>
@@ -105,14 +71,6 @@ namespace JigLib
             /// FW情報取得
             /// </summary>
             GET_FW_INFO = 0x0001,
-            /// <summary>
-            /// FWエラー取得
-            /// </summary>
-            GET_FW_ERR,
-            /// <summary>
-            /// FWエラークリア
-            /// </summary>
-            CLEAR_FW_ERR,
             /// <summary>
             /// マトリクスデータクリア
             /// </summary>
@@ -143,11 +101,7 @@ namespace JigLib
             /// <summary>
             /// バッファに空きがないので要求データを破棄した
             /// </summary>
-            BUF_NOT_ENOUGH,
-            /// <summary>
-            /// I2C:address not acknowledged, or, no device present.
-            /// </summary>
-            FRM_ERR_I2C_NO_DEVICE
+            BUF_NOT_ENOUGH
         }
 
         /// <summary>
@@ -156,19 +110,19 @@ namespace JigLib
         protected struct ST_FRM_REQ_FRAME
         {
             /// <summary>
-            /// ヘッダ(1byte)
+            /// ヘッダ(1バイト)
             /// </summary>
             public E_FRM_HEADER header;
             /// <summary>
-            /// シーケンス番号(2byte)
+            /// シーケンス番号(2バイト)
             /// </summary>
             public UInt16 seqNo;
             /// <summary>
-            /// コマンド(2byte)
+            /// コマンド(2バイト)
             /// </summary>
             public E_FRM_CMD cmd;
             /// <summary>
-            /// データサイズ(2byte)
+            /// データサイズ(2バイト)
             /// </summary>
             public UInt16 dataSize;
             /// <summary>
@@ -176,7 +130,7 @@ namespace JigLib
             /// </summary>
             public byte[] aData;
             /// <summary>
-            /// チェックサム(2byte)
+            /// チェックサム(2バイト)
             /// </summary>
             public UInt16 checksum;
         }
@@ -187,23 +141,23 @@ namespace JigLib
         protected struct ST_FRM_RES_FRAME
         {
             /// <summary>
-            /// ヘッダ(1byte)
+            /// ヘッダ(1バイト)
             /// </summary>
             public E_FRM_HEADER header;
             /// <summary>
-            /// シーケンス番号(2byte)
+            /// シーケンス番号(2バイト)
             /// </summary>
             public UInt16 seqNo;
             /// <summary>
-            /// コマンド(2byte)
+            /// コマンド(2バイト)
             /// </summary>
             public E_FRM_CMD cmd;
             /// <summary>
-            /// エラーコード(2byte) 
+            /// エラーコード(2バイト)
             /// </summary>
             public E_FRM_ERRCODE errCode;
             /// <summary>
-            /// データサイズ(2byte)
+            /// データサイズ(2バイト)
             /// </summary>
             public UInt16 dataSize;
             /// <summary>
@@ -211,47 +165,15 @@ namespace JigLib
             /// </summary>
             public byte[] aData;
             /// <summary>
-            /// チェックサム(2byte)
+            /// チェックサム(2バイト)
             /// </summary>
             public UInt16 checksum;
         }
 
-        /// <summary>
-        /// 通知フレーム構造体
-        /// </summary>
-        protected struct ST_FRM_NOTIFY_FRAME
-        {
-            /// <summary>
-            /// ヘッダ(1byte)
-            /// </summary>
-            public E_FRM_HEADER header;
-            /// <summary>
-            /// データサイズ(2byte)
-            /// </summary>
-            public UInt16 dataSize;
-            /// <summary>
-            /// データ
-            /// </summary>
-            public byte[] aData;
-            /// <summary>
-            /// チェックサム(2byte)
-            /// </summary>
-            public UInt16 checksum;
-        }
-
-        /// <summary>
-        /// 接続先名
-        /// </summary>
-        public string PrpConnectName { get; set; } = string.Empty;
-        /// <summary>
-        /// UART受信データのキュー
-        /// </summary>
-        public BlockingCollection<byte> PrpUartRecvDataQue { get; set; } = new BlockingCollection<byte>(4096);
-        
         /// <summary>
         /// 接続済みか否か
         /// </summary>
-        protected bool _isConnected = false;
+        protected volatile bool _isConnected = false;
         /// <summary>
         /// 応答フレーム受信イベント
         /// </summary>
@@ -261,40 +183,33 @@ namespace JigLib
         /// </summary>
         protected BlockingCollection<ST_FRM_RES_FRAME> PrpResFrmQue { get; set; } = new BlockingCollection<ST_FRM_RES_FRAME>(1);
         /// <summary>
-        /// COMポート/ソケットのアクセスを排他するためのロック用オブジェクト
+        /// COMポートのアクセスを排他するためのロック用オブジェクト
         /// </summary>
-        protected Object _lockPort = new Object();
+        protected object _lockPort = new object();
         /// <summary>
         /// 送信～応答待ち中は、次の送信をしないようにするためのロック用オブジェクト
         /// </summary>
-        protected Object _lockSend = new Object();
+        protected object _lockSend = new object();
         /// <summary>
         /// 受信処理に関するリソースを排他するロック用オブジェクト
         /// </summary>
-        protected Object _lockRecv = new Object();
+        protected object _lockRecv = new object();
         /// <summary>
         /// 切断処理を実行中か否か
         /// </summary>
-        protected bool _isDisconnecting = false;
+        protected volatile bool _isDisconnecting = false;
 
         /// <summary>
         /// シーケンス番号
         /// </summary>
         private UInt16 _seqNo = 0;
         /// <summary>
-        /// 受信処理の最後のエラーメッセージ
-        /// </summary>
-        private string _strLastRecvErrMsg = null;
-        /// <summary>
-        /// 受信フレーム(応答/通知フレーム)の受信サイズ
+        /// 受信フレーム(応答フレーム)の受信サイズ
         /// </summary>
         private int _recvSize = 0;
         /// <summary>
-        /// 受信フレーム(応答/通知フレーム)のバッファ
+        /// 受信フレーム(応答フレーム)のバッファ
         /// </summary>
-        /// <remarks>
-        /// 応答フレームの方が通知フレームよりサイズが大きい
-        /// </remarks>
         private byte[] _bufRecvFrm = new byte[FRM_RES_SIZE];
         /// <summary>
         /// フレームエンドタイムアウト用タイマー

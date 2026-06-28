@@ -1,7 +1,6 @@
-﻿// Copyright © 2024 Shiomachi Software. All rights reserved.
+// Copyright © 2024 Shiomachi Software. All rights reserved.
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace JigLib
 {
@@ -26,6 +25,11 @@ namespace JigLib
             strErrMsg = SendCmd(E_FRM_CMD.GET_FW_INFO, aReqData, out aResData);
             if (strErrMsg == null)
             {
+                if (aResData == null || aResData.Length < 44)
+                {
+                    return "Invalid firmware information data size received.";
+                }
+
                 strMakerName = string.Empty;
                 for (int i = 0; i < 16; i++)
                 {
@@ -56,54 +60,6 @@ namespace JigLib
                     strBoardId += aResData[offset + i].ToString("X2");
                 }
             }
-
-            return strErrMsg;
-        }
-
-        /// <summary>
-        /// 「FWエラー情報取得」コマンドの要求を送信
-        /// </summary>
-        public string SendCmd_GetFwError(ref List<string> lstErrMsg)
-        {
-            byte[] aReqData = null;
-            byte[] aResData = null;
-            UInt32 errBits = 0;
-            string strErrMsg;
-
-            strErrMsg = SendCmd(E_FRM_CMD.GET_FW_ERR, aReqData, out aResData);
-            if (strErrMsg == null)
-            {
-                errBits = BitConverter.ToUInt32(aResData, 0);
-                lstErrMsg.Clear();
-                for (int i = 0; i < 32/*FW_ERR_MSG_ARY.Length*/; i++)
-                {
-                    if ((errBits & (1 << i)) != 0)
-                    {
-                        if (i < FW_ERR_MSG_ARY.Length)
-                        {
-                            lstErrMsg.Add(FW_ERR_MSG_ARY[i]);
-                        }
-                        else
-                        {
-                            lstErrMsg.Add("Undefined error");
-                        }
-                    } 
-                }
-            }
-
-            return strErrMsg;
-        }
-
-        /// <summary>
-        /// 「FWエラークリア」コマンドの要求を送信
-        /// </summary>
-        public string SendCmd_ClearFwError()
-        {
-            byte[] aReqData = null;
-            byte[] aResData = null;
-            string strErrMsg;
-
-            strErrMsg = SendCmd(E_FRM_CMD.CLEAR_FW_ERR, aReqData, out aResData);
 
             return strErrMsg;
         }
@@ -171,13 +127,13 @@ namespace JigLib
                 // チェックサム計算前の要求フレームのbyte型配列を取得
                 stReqFrm.checksum = 0;
                 aReqFrm = ConvertReqFrameStructToByteArray(stReqFrm);
-                // チェックサムを計算 
+                // チェックサムを計算
                 stReqFrm.checksum = CalcChecksum(aReqFrm, aReqFrm.Length - 2);
 
                 // [要求フレームを送信]
                 // チェックサム計算後の要求フレームのbyte型配列を取得
                 aReqFrm = ConvertReqFrameStructToByteArray(stReqFrm);
-                // 要求フレームを送信    
+                // 要求フレームを送信
                 strErrMsg = Send(aReqFrm);
                 if (strErrMsg != null)
                 {
@@ -185,17 +141,6 @@ namespace JigLib
                     _isConnected = false; // 切断しているとみなす
                     goto End;
                 }
-
-                // [応答無しのコマンドの場合]
-                /*
-                switch (eCmd)
-                {
-                    case E_FRM_CMD.SEND_UART:
-                        goto End;
-                    default:
-                        break;
-                }
-                */
 
                 // [応答フレーム受信イベント発生待ち]
                 if (!PrpResEvent.WaitOne(resTimeout))
@@ -288,84 +233,6 @@ namespace JigLib
             }
 
             return buf;
-        }
-
-        /// <summary>
-        /// IPアドレスの文字列をbyte型の配列に変換する
-        /// </summary>
-        /// <remarks>
-        /// セパレータはドット。
-        /// </remarks>
-        private string ConvertIpAddrStringToByteArray(string strText, out byte[] aVal)
-        {
-            char[] aSeparator = { '.' }; // セパレータ
-            string strErrMsg = ConvertStringToValArray(strText, aSeparator, 10, out aVal);
-            bool isErr = false;
-
-            if (strErrMsg == null)
-            {
-                if (aVal.Length != 4)
-                {
-                    isErr = true;
-                }
-            }
-            else
-            {
-                isErr = true;
-            }
-
-            if (isErr)
-            {
-                strErrMsg = "Invalid parameter. (IP address)";
-            }
-
-            return strErrMsg;
-        }
-
-        /// <summary>
-        /// 文字列をbyte型の配列に変換する
-        /// </summary>
-        private string ConvertStringToValArray(string strText, char[] aSeparator, int baseNumber, out byte[] aVal)
-        {
-            string[] astrSplit; // 分割後の文字列
-            string strErrMsg = null;
-
-            // 文字列をセパレータで分割
-            strText = strText.Replace("\r\n", "\r");
-            astrSplit = strText.Split(aSeparator);
-
-            // [文字列をbyte型の配列に変換]
-            // 要素数が分割された文字列の数であるbyte型配列を用意
-            aVal = new byte[astrSplit.Count()];
-            // 分割された文字列の数だけ、文字列をbyte型に変換
-            for (int i = 0; i < astrSplit.Count(); i++)
-            {
-                try
-                {
-                    aVal[i] = Convert.ToByte(astrSplit[i], baseNumber);
-                }
-                catch (Exception ex)
-                {
-                    strErrMsg = ex.Message;
-                }
-            }
-
-            return strErrMsg;
-        }
-
-        /// <summary>
-        /// char型の配列をbyte型の配列に変換する
-        /// </summary>
-        private byte[] ConvertCharAryToByteAry(char[] achArray)
-        {
-            byte[] abyArray = new byte[achArray.Length];
-
-            for (int i = 0; i < achArray.Length; i++)
-            {
-                abyArray[i] = (byte)achArray[i];
-            }
-
-            return abyArray;
         }
     }
 }

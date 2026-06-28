@@ -1,27 +1,27 @@
 #include "Common.h"
 
-static uint8_t g_RGBMatrixFramebuffer[256]={0xff};
+static uint8_t f_RGBMatrixFramebuffer[Matrix_ROWS * Matrix_COLS_BYTE]={0xff};
 
-static void RGBMatrixDeviceInit()
+static void RGBMatrixDeviceInit(void)
 {
     HAL_RGBMatrixDeviceInit();
 }
 
-static  void RGBMatrixDeviceFlush(PDisplayDevice ptDev)
+static void RGBMatrixDeviceFlush(PDisplayDevice ptDev)
 {
     HAL_RGBMatrixDeviceFlush(ptDev);
 }
 
-static DisplayDevice g_tRGBMatrixDevice = {
-	(char *)"RGBMatrix",
-	g_RGBMatrixFramebuffer,
-	64,
-	32,
+static DisplayDevice f_tRGBMatrixDevice = {
+    (char *)"RGBMatrix",
+    f_RGBMatrixFramebuffer,
+    Matrix_COLS,
+    Matrix_ROWS,
     RGBMatrixDeviceInit,
     RGBMatrixDeviceFlush
 };
 
 PDisplayDevice GetDisplayDevice(void)
 {
-    return &g_tRGBMatrixDevice;
+    return &f_tRGBMatrixDevice;
 }

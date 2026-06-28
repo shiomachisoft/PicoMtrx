@@ -1,9 +1,6 @@
 #ifndef __RGBMATRIXCONFIG_H
 #define __RGBMATRIXCONFIG_H
 
-#define CN 0
-#define EN 1
-
 #define Matrix_COLS 64
 #define Matrix_ROWS 32
 

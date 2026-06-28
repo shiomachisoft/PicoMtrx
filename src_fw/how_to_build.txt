@@ -1,0 +1,29 @@
+--- Build Instructions ---
+
+< Prerequisites >
+Install the "Raspberry Pi Pico" extension in Visual Studio Code (VS Code) on Windows.
+
+Verified to build successfully with the following versions:
+
+VS Code: 1.126.0
+
+"Raspberry Pi Pico" extension: 0.20.0
+
+< Build Procedure >
+
+Open VS Code in a "New Window".
+
+Click "Import Project" in the "Raspberry Pi Pico" extension.
+
+For "Location", select the PicoMtrx folder where the FW source files are stored.
+
+For "Select Pico SDK version", choose "v2.2.0".
+
+Click "Import".
+
+For "Switch Build Type" in the "Raspberry Pi Pico" extension, select either "Release" or "Debug" as appropriate.
+
+Click "Compile Project" in the "Raspberry Pi Pico" extension.
+
+[ Note ]
+Please be aware that the build will fail if the project path contains full-width characters.

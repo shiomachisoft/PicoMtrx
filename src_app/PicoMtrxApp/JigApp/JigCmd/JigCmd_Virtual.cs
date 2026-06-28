@@ -1,4 +1,4 @@
-﻿// Copyright © 2024 Shiomachi Software. All rights reserved.
+// Copyright © 2024 Shiomachi Software. All rights reserved.
 using System;
 
 namespace JigLib
@@ -11,7 +11,7 @@ namespace JigLib
         /// <remarks>
         /// 継承先でオーバーライドすること
         /// </remarks>
-        public virtual string Connect(Object objParam)
+        public virtual string Connect(string strPortName)
         {
             return null;
         }
@@ -31,7 +31,7 @@ namespace JigLib
         /// </summary>
         /// <remarks>
         /// 継承先でオーバーライドすること
-        /// </remarks> 
+        /// </remarks>
         public virtual bool IsConnected()
         {
             return true;
@@ -54,7 +54,7 @@ namespace JigLib
         /// <remarks>
         /// 継承先でオーバーライドすること
         /// </remarks>
-        protected virtual bool IsExistRecvData()
+        protected virtual bool HasRecvData()
         {
             return true;
         }
