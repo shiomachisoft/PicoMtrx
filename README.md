@@ -38,7 +38,7 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 
 ### 2. FW Flashing Procedure
 1. While holding down the BOOTSEL button on the Pico, connect the Pico and the PC with a USB cable.
-2. Release the white button once Windows recognizes the USB drive named "RPI-RP2".
+2. Release the BOOTSEL button once Windows recognizes the USB drive named "RPI-RP2".
 3. Drag and drop the included "PicoMtrx.uf2" file into the "RPI-RP2" drive.
 
 ## Usage
@@ -52,7 +52,7 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 
 ## How to Create an mtrx File
 
-You can create a dedicated video file from your own mp4 video.
+You can create a matrix data file (.mtrx file) from your own mp4 video.
 
 1. Click the "Convert mp4 to mtrx file" button in the app and select the mp4 file you want to convert.
 2. An ".mtrx" file will be created in the same folder as the mp4 file.
