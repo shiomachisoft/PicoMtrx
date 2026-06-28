@@ -58,7 +58,7 @@ You can create a matrix data file (.mtrx file) from your own mp4 video.
 2. An ".mtrx" file will be created in the same folder as the mp4 file.
 
 > **Note**
-> * Since the WAVESHARE-20591 has limited dot count and color depth, videos with simple graphics are recommended.
+> Since the WAVESHARE-20591 has limited dot count and color depth, videos with simple graphics are recommended.
 
 ## Source Code
 
