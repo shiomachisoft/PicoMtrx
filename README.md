@@ -12,7 +12,8 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 ## Operating Environment
 
 * **Microcontroller Board:** Raspberry Pi Pico
-* **Dot Matrix LED:** WAVESHARE-20591
+* **Dot Matrix LED:** [WAVESHARE-20591](https://www.waveshare.com/pico-rgb-matrix-p3-64x32.htm)
+  - [WIKI](https://www.waveshare.com/wiki/Pico-RGB-Matrix-P3-64x32) 
 * **PC (OS):** Windows 11 or Windows 10
   * Requirement: .NET Framework 4.X (4.6.2 or later) must be installed. (Windows 11 meets this requirement by default.)
   * **Note:** .NET 5 and later versions are not supported.
