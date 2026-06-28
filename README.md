@@ -26,9 +26,7 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 
 ## System Architecture
 
-<img width="1076" height="488" alt="System Architecture Diagram" src="https://github.com/user-attachments/assets/164809ec-3949-4ce5-90fa-d0c543b1059d" />
-
----
+<img width="921" height="417" alt="image" src="https://github.com/user-attachments/assets/7e56d678-7741-4bc2-bc3d-d42f4e0ef381" />
 
 ## Installation Procedure
 
