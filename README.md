@@ -1,6 +1,6 @@
 # PicoMtrx
 
-Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video data on a dot matrix LED (WAVESHARE-20591).
+Raspberry Pi Pico firmware and a PC application for displaying MP4 videos on a dot-matrix LED display: WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32).
 
 **[Demo Video](https://www.youtube.com/watch?v=Xb-uuDCgQQs)**<br>
 <a href="https://www.youtube.com/watch?v=Xb-uuDCgQQs">
