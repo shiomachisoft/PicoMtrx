@@ -53,6 +53,8 @@ namespace JigApp
             this.label_ConvertProgress = new System.Windows.Forms.Label();
             this.progressBar_Convert = new System.Windows.Forms.ProgressBar();
             this.label_FileName = new System.Windows.Forms.Label();
+            this.label_CropMode = new System.Windows.Forms.Label();
+            this.comboBox_CropMode = new System.Windows.Forms.ComboBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox_Mtrx.SuspendLayout();
@@ -263,18 +265,20 @@ namespace JigApp
             this.groupBox_Mtrx.Controls.Add(this.label_ConvertProgress);
             this.groupBox_Mtrx.Controls.Add(this.progressBar_Convert);
             this.groupBox_Mtrx.Controls.Add(this.label_FileName);
+            this.groupBox_Mtrx.Controls.Add(this.label_CropMode);
+            this.groupBox_Mtrx.Controls.Add(this.comboBox_CropMode);
             this.groupBox_Mtrx.Location = new System.Drawing.Point(12, 406);
             this.groupBox_Mtrx.Name = "groupBox_Mtrx";
-            this.groupBox_Mtrx.Size = new System.Drawing.Size(805, 300);
+            this.groupBox_Mtrx.Size = new System.Drawing.Size(805, 401);
             this.groupBox_Mtrx.TabIndex = 42;
             this.groupBox_Mtrx.TabStop = false;
             this.groupBox_Mtrx.Text = "LED Matrix";
             // 
             // button_ConvertMp4ToMtrx
             // 
-            this.button_ConvertMp4ToMtrx.Location = new System.Drawing.Point(250, 35);
+            this.button_ConvertMp4ToMtrx.Location = new System.Drawing.Point(209, 103);
             this.button_ConvertMp4ToMtrx.Name = "button_ConvertMp4ToMtrx";
-            this.button_ConvertMp4ToMtrx.Size = new System.Drawing.Size(307, 50);
+            this.button_ConvertMp4ToMtrx.Size = new System.Drawing.Size(397, 50);
             this.button_ConvertMp4ToMtrx.TabIndex = 0;
             this.button_ConvertMp4ToMtrx.TabStop = false;
             this.button_ConvertMp4ToMtrx.Text = "Convert mp4 to mtrx file";
@@ -283,9 +287,9 @@ namespace JigApp
             // 
             // button_OpenMtrxFile
             // 
-            this.button_OpenMtrxFile.Location = new System.Drawing.Point(250, 229);
+            this.button_OpenMtrxFile.Location = new System.Drawing.Point(209, 330);
             this.button_OpenMtrxFile.Name = "button_OpenMtrxFile";
-            this.button_OpenMtrxFile.Size = new System.Drawing.Size(307, 50);
+            this.button_OpenMtrxFile.Size = new System.Drawing.Size(397, 50);
             this.button_OpenMtrxFile.TabIndex = 1;
             this.button_OpenMtrxFile.TabStop = false;
             this.button_OpenMtrxFile.Text = "Open mtrx file";
@@ -294,7 +298,7 @@ namespace JigApp
             // 
             // label_ConvertProgress
             // 
-            this.label_ConvertProgress.Location = new System.Drawing.Point(310, 188);
+            this.label_ConvertProgress.Location = new System.Drawing.Point(310, 296);
             this.label_ConvertProgress.Name = "label_ConvertProgress";
             this.label_ConvertProgress.Size = new System.Drawing.Size(185, 31);
             this.label_ConvertProgress.TabIndex = 2;
@@ -303,7 +307,7 @@ namespace JigApp
             // 
             // progressBar_Convert
             // 
-            this.progressBar_Convert.Location = new System.Drawing.Point(18, 141);
+            this.progressBar_Convert.Location = new System.Drawing.Point(18, 254);
             this.progressBar_Convert.Name = "progressBar_Convert";
             this.progressBar_Convert.Size = new System.Drawing.Size(771, 34);
             this.progressBar_Convert.TabIndex = 3;
@@ -311,17 +315,36 @@ namespace JigApp
             // 
             // label_FileName
             // 
-            this.label_FileName.Location = new System.Drawing.Point(18, 96);
+            this.label_FileName.Location = new System.Drawing.Point(18, 158);
             this.label_FileName.Name = "label_FileName";
-            this.label_FileName.Size = new System.Drawing.Size(771, 34);
+            this.label_FileName.Size = new System.Drawing.Size(771, 88);
             this.label_FileName.TabIndex = 4;
             this.label_FileName.Text = "---";
             this.label_FileName.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // label_CropMode
+            // 
+            this.label_CropMode.Location = new System.Drawing.Point(14, 28);
+            this.label_CropMode.Name = "label_CropMode";
+            this.label_CropMode.Size = new System.Drawing.Size(350, 21);
+            this.label_CropMode.TabIndex = 5;
+            this.label_CropMode.Text = "Crop Mode:";
+            // 
+            // comboBox_CropMode
+            // 
+            this.comboBox_CropMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox_CropMode.DropDownWidth = 771;
+            this.comboBox_CropMode.FormattingEnabled = true;
+            this.comboBox_CropMode.Location = new System.Drawing.Point(14, 52);
+            this.comboBox_CropMode.Name = "comboBox_CropMode";
+            this.comboBox_CropMode.Size = new System.Drawing.Size(771, 29);
+            this.comboBox_CropMode.TabIndex = 6;
+            this.comboBox_CropMode.TabStop = false;
+            // 
             // FormMain
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(832, 718);
+            this.ClientSize = new System.Drawing.Size(832, 822);
             this.Controls.Add(this.groupBox_Mtrx);
             this.Controls.Add(this.button_ClearAppLog);
             this.Controls.Add(this.label9);
@@ -373,5 +396,7 @@ namespace JigApp
         private System.Windows.Forms.Label label_ConvertProgress;
         private System.Windows.Forms.ProgressBar progressBar_Convert;
         private System.Windows.Forms.Label label_FileName;
+        private System.Windows.Forms.Label label_CropMode;
+        private System.Windows.Forms.ComboBox comboBox_CropMode;
     }
 }

@@ -4,7 +4,7 @@
 
 // [define]
 // FWバージョン
-#define FW_VER 0x26062700
+#define FW_VER 0x26070500
 
 // FW名
 // FW名のサイズは、NULL文字含めてFW_NAME_BUF_SIZEのサイズ以内

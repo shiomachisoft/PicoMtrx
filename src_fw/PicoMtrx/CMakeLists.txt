@@ -45,6 +45,8 @@ target_sources(PicoMtrx	PRIVATE
       	Cmd.c
        	)
 
+pico_generate_pio_header(PicoMtrx ${CMAKE_CURRENT_LIST_DIR}/Matrix/ModuleDrivers/rgb_matrix.pio)
+
 target_compile_options(PicoMtrx	PRIVATE
 		-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
@@ -81,6 +83,7 @@ target_link_libraries(PicoMtrx PRIVATE
       	hardware_clocks
         hardware_flash
         hardware_exception
+        hardware_pio
 		)
 
 # enable usb output, disable uart output

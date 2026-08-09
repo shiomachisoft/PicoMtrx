@@ -1,3 +1,6 @@
+- 20260705
+Achieves 4096 colors at 30fps using PIO.
+
 - 20260627
 Increased LED matrix brightness and made various other improvements.
 

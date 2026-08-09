@@ -45,7 +45,7 @@ namespace JigLib
         /// <summary>
         /// Recv()のwhile文のディレイ(ms)
         /// </summary>
-        private const int RECV_DELAY = 50;
+        private const int RECV_DELAY = 2;
 
         /// <summary>
         /// フレーム中のヘッダ部の定義
@@ -79,6 +79,10 @@ namespace JigLib
             /// マトリクスデータ更新
             /// </summary>
             UPDATE_MATRIX,
+            /// <summary>
+            /// バッファステータス取得
+            /// </summary>
+            GET_BUF_STATUS,
         }
 
         /// <summary>

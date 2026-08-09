@@ -1,6 +1,5 @@
 // Copyright © 2024 Shiomachi Software. All rights reserved.
 
-//#define USE_DITHERING // ディザリングを使用する
 
 using System;
 using System.Collections.Generic;
@@ -39,11 +38,11 @@ namespace JigApp
         /// <summary>
         /// 1枚分のマトリクスデータのサイズ
         /// </summary>
-        private const int MTRX_DATA_SIZE = MTRX_COLS * MTRX_ROWS_SHOW;
+        private const int MTRX_DATA_SIZE = MTRX_COLS * MTRX_ROWS * 3;
         /// <summary>
         /// マトリクスデータ更新コマンドで1度に送信できるマトリクスデータの枚数
         /// </summary>
-        private const int MTRX_SEND_MAX = 30;
+        private const int MTRX_SEND_MAX = 10;
         /// <summary>
         /// 接続ボタンの「接続する」状態の表示テキスト
         /// </summary>
@@ -107,6 +106,11 @@ namespace JigApp
             label_AppVer.Text = verInfo.FileVersion;
             // COMポート名の一覧をコンボボックスに追加
             AddSerialPortToList();
+            // 切り抜きモードの一覧をコンボボックスに追加
+            comboBox_CropMode.Items.Add("No crop (Default)");
+            comboBox_CropMode.Items.Add("Crop center area (1/2 width & height)");
+            comboBox_CropMode.Items.Add("Crop center area (1/4 width & height)");
+            comboBox_CropMode.SelectedIndex = 0;
             // 接続状態ラベルの色を設定
             label_ConnectStatus.BackColor = UI.MonRed;
             // 接続状態に依存するボタンを無効に設定
@@ -293,10 +297,12 @@ namespace JigApp
                     // mtrxのフルパスを作成
                     string strMtrxPath = Path.Combine(Path.GetDirectoryName(strMp4Path), strMtrxName);
 
+                    int cropMode = comboBox_CropMode.SelectedIndex;
+
                     string strErrMsg = await Task.Run(() =>
                     {
                         // mp4ファイルをmtrxファイルに変換する
-                        return ConvertMp4ToMtrxFile(strMp4Path, strMtrxPath);
+                        return ConvertMp4ToMtrxFile(strMp4Path, strMtrxPath, cropMode);
                     });
 
                     if (strErrMsg != null)
@@ -312,7 +318,7 @@ namespace JigApp
         /// <summary>
         /// mp4ファイルをmtrxファイルに変換する
         /// </summary>
-        private string ConvertMp4ToMtrxFile(string strMp4Path, string strMtrxPath)
+        private string ConvertMp4ToMtrxFile(string strMp4Path, string strMtrxPath, int cropMode)
         {
             string strErrMsg = null;
 
@@ -408,10 +414,30 @@ namespace JigApp
                                     yStart = 0; // 高さは元の画像と同じなのでY座標は0
                                 }
 
-                                // 入力画像から指定した範囲を切り抜く(メモリ破損防止のためディープコピーを生成してから元のメモリをDispose)
-                                var cropped = new Mat(img, new OpenCvSharp.CPlusPlus.Rect(xStart, yStart, targetWidth, targetHeight)).Clone();
-                                img.Dispose();
-                                img = cropped;
+                                // ユーザーが選択した切り抜きモードに応じて切り抜き範囲をさらに縮小(中央中心)
+                                double cropScale = 1.0;
+                                if (cropMode == 1) // 1/2を切り抜く
+                                {
+                                    cropScale = 0.5;
+                                }
+                                else if (cropMode == 2) // 1/4を切り抜く
+                                {
+                                    cropScale = 0.25;
+                                }
+
+                                int finalWidth = (int)(targetWidth * cropScale);
+                                int finalHeight = (int)(targetHeight * cropScale);
+                                int finalX = xStart + (targetWidth - finalWidth) / 2;
+                                int finalY = yStart + (targetHeight - finalHeight) / 2;
+
+                                 // 入力画像から指定した範囲を切り抜く(メモリ破損防止のためディープコピーを生成してから元のメモリをDispose)
+                                 Mat cropped;
+                                 using (var subMat = new Mat(img, new OpenCvSharp.CPlusPlus.Rect(finalX, finalY, finalWidth, finalHeight)))
+                                 {
+                                     cropped = subMat.Clone();
+                                 }
+                                 img.Dispose();
+                                 img = cropped;
 
                                 // 画像を64×32ピクセルにリサイズ(デフォルトのバイリニア補間を適用)
                                 var resized = new Mat();
@@ -419,30 +445,20 @@ namespace JigApp
                                 img.Dispose();
                                 img = resized;
 
-#if USE_DITHERING
-                                // 鮮鋭化フィルタを適用
-                                img = ApplyUnsharpMasking(img, 1.0, 1.5);
-                                // Floyd-Steinberg誤差拡散ディザリングによる減色
-                                img = ConvertToDithered8Color(img);
-#else
-                                // 入力画像をRGB各2諧調の画像に変換(大津の2値化による減色)
-                                img = ConvertToBilevel(img);
-#endif
-                                // [RGB各2諧調の画像からマトリクスデータを作成]
-                                byte[,] matrixData = null; // 1枚分のマトリクスデータ
-                                matrixData = MakeMatrixData(img);
-
-                                img.Dispose();
-                                img = null;
-
                                 // [マトリクスデータファイル(.mtrx)の書き込み]
-                                for (int y = 0; y < MTRX_ROWS_SHOW; y++)
+                                for (int y = 0; y < MTRX_ROWS; y++)
                                 {
                                     for (int x = 0; x < MTRX_COLS; x++)
                                     {
-                                        writer.Write(matrixData[y, x]);
+                                        Vec3b pixel = img.At<Vec3b>(y, x);
+                                        writer.Write(pixel.Item2); // R
+                                        writer.Write(pixel.Item1); // G
+                                        writer.Write(pixel.Item0); // B
                                     }
                                 }
+
+                                img.Dispose();
+                                img = null;
 
                                 iFrame++;
                                 // 進捗のUIを更新
@@ -485,231 +501,7 @@ namespace JigApp
             return flipped;
         }
 
-        /// <summary>
-        /// 入力画像をRGB各2諧調の画像に変換(減色)
-        /// </summary>
-        /// <remarks>
-        /// 鮮鋭化フィルタ⇒大津の2値化を適用
-        /// </remarks>
-        private Mat ConvertToBilevel(Mat img)
-        {
-            var channels = Cv2.Split(img); // RGB成分
 
-            var bilevelChannels = new Mat[3]; // RGB成分の2値画像
-
-            // [各RGB成分に対して、鮮鋭化フィルタ⇒大津の2値化を適用]
-            for (int i = 0; i < channels.Length; i++)
-            {
-                // 鮮鋭化フィルタを適用
-                channels[i] = ApplyUnsharpMasking(channels[i], 3, 3);
-
-                // [大津の2値化]
-                bilevelChannels[i] = new Mat(); // RGB成分の2値画像
-                double thresholdValue = 0; // Otsu法が自動計算するため0で良い
-                double maxVal = 255;
-                double otsuThreshold = Cv2.Threshold(
-                    channels[i],
-                    bilevelChannels[i],
-                    thresholdValue,
-                    maxVal,
-                    // Binary と Otsu フラグを組み合わせて、大津の2値化を要求
-                    type: ThresholdType.Binary | ThresholdType.Otsu
-                );
-
-                channels[i].Dispose(); // RGB成分を解放
-            }
-
-            // 各RGB成分の2値画像を結合
-            var outImg = new Mat();
-            Cv2.Merge(bilevelChannels, outImg);
-
-            // RGB成分の2値画像を解放
-            for (int i = 0; i < channels.Length; i++)
-            {
-                bilevelChannels[i].Dispose();
-            }
-
-            img.Dispose();
-
-            return outImg;
-        }
-
-        /// <summary>
-        /// 入力画像をRGB各2諧調の画像に変換(Floyd-Steinberg誤差拡散ディザリングによる減色)
-        /// </summary>
-        private Mat ConvertToDithered8Color(Mat img)
-        {
-            int width = img.Cols;
-            int height = img.Rows;
-
-            // 誤差を周囲に高精度に拡散するため、浮動小数点の配列に画像データを展開
-            float[,,] bgrData = new float[height, width, 3];
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    Vec3b pixel = img.At<Vec3b>(y, x);
-                    bgrData[y, x, 0] = pixel.Item0; // B
-                    bgrData[y, x, 1] = pixel.Item1; // G
-                    bgrData[y, x, 2] = pixel.Item2; // R
-                }
-            }
-
-            // Floyd-Steinberg 誤差拡散ディザリングの適用
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    float oldB = bgrData[y, x, 0];
-                    float oldG = bgrData[y, x, 1];
-                    float oldR = bgrData[y, x, 2];
-
-                    // 各チャンネルで127.5を閾値として0または255に丸める
-                    // (これにより自動的に定義された8色のうち、RGB空間上で最短距離の色にマッピングされます)
-                    float newB = (oldB > 127.5f) ? 255.0f : 0.0f;
-                    float newG = (oldG > 127.5f) ? 255.0f : 0.0f;
-                    float newR = (oldR > 127.5f) ? 255.0f : 0.0f;
-
-                    // 誤差を算出
-                    float errB = oldB - newB;
-                    float errG = oldG - newG;
-                    float errR = oldR - newR;
-
-                    bgrData[y, x, 0] = newB;
-                    bgrData[y, x, 1] = newG;
-                    bgrData[y, x, 2] = newR;
-
-                    // Floyd-Steinberg の配分比率に従って誤差を拡散
-                    // 右: 7/16, 左下: 3/16, 下: 5/16, 右下: 1/16
-                    if (x + 1 < width)
-                    {
-                        bgrData[y, x + 1, 0] += errB * 7.0f / 16.0f;
-                        bgrData[y, x + 1, 1] += errG * 7.0f / 16.0f;
-                        bgrData[y, x + 1, 2] += errR * 7.0f / 16.0f;
-                    }
-                    if (y + 1 < height)
-                    {
-                        if (x - 1 >= 0)
-                        {
-                            bgrData[y + 1, x - 1, 0] += errB * 3.0f / 16.0f;
-                            bgrData[y + 1, x - 1, 1] += errG * 3.0f / 16.0f;
-                            bgrData[y + 1, x - 1, 2] += errR * 3.0f / 16.0f;
-                        }
-                        bgrData[y + 1, x, 0] += errB * 5.0f / 16.0f;
-                        bgrData[y + 1, x, 1] += errG * 5.0f / 16.0f;
-                        bgrData[y + 1, x, 2] += errR * 5.0f / 16.0f;
-                        if (x + 1 < width)
-                        {
-                            bgrData[y + 1, x + 1, 0] += errB * 1.0f / 16.0f;
-                            bgrData[y + 1, x + 1, 1] += errG * 1.0f / 16.0f;
-                            bgrData[y + 1, x + 1, 2] += errR * 1.0f / 16.0f;
-                        }
-                    }
-                }
-            }
-
-            // 新たな Mat オブジェクトにデータを書き戻す
-            var outImg = new Mat(height, width, MatType.CV_8UC3);
-            for (int y = 0; y < height; y++)
-            {
-                for (int x = 0; x < width; x++)
-                {
-                    byte b = (byte)Math.Max(0, Math.Min(255, (int)bgrData[y, x, 0]));
-                    byte g = (byte)Math.Max(0, Math.Min(255, (int)bgrData[y, x, 1]));
-                    byte r = (byte)Math.Max(0, Math.Min(255, (int)bgrData[y, x, 2]));
-                    outImg.Set<Vec3b>(y, x, new Vec3b(b, g, r));
-                }
-            }
-
-            img.Dispose();
-            return outImg;
-        }
-
-        /// <summary>
-        /// 鮮鋭化フィルタ
-        /// </summary>
-        private Mat ApplyUnsharpMasking(Mat img, double sigma, double amount)
-        {
-            Mat outImg = new Mat();
-
-            using (var blurred = new Mat())
-            {
-                // 元画像をぼかす
-                Cv2.GaussianBlur(img, blurred, new OpenCvSharp.CPlusPlus.Size(0, 0), sigma);
-
-                // 鮮鋭化の計算
-                Cv2.AddWeighted(img, 1.0 + amount, blurred, -amount, 0, outImg);
-            }
-
-            img.Dispose();
-
-            return outImg;
-        }
-
-        /// <summary>
-        /// RGB各2諧調の画像からマトリクスデータを作成
-        /// </summary>
-        private byte[,] MakeMatrixData(Mat img)
-        {
-            byte[,] matrixData = new byte[MTRX_ROWS_SHOW, MTRX_COLS]; // マトリクスデータの配列(出力配列)
-
-            for (int y = 0; y < MTRX_ROWS; y++) // LEDマトリクスの行数だけ繰り返す
-            {
-                for (int x = 0; x < MTRX_COLS; x++) // LEDマトリクスの列数だけ繰り返す
-                {
-                    // 元画像のピクセル色を取得
-                    Vec3b pixel = img.At<Vec3b>(y, x);
-                    byte r = pixel.Item2;
-                    byte g = pixel.Item1;
-                    byte b = pixel.Item0;
-                    byte color;
-                    if (r == 0 && g == 0 && b == 255)
-                    {
-                        color = 0x01;       // Blue
-                    }
-                    else if (r == 0 && g == 255 && b == 0)
-                    {
-                        color = 0x02;       // Green
-                    }
-                    else if (r == 0 && g == 255 && b == 255)
-                    {
-                        color = 0x03;       // Cyan
-                    }
-                    else if (r == 255 && g == 0 && b == 0)
-                    {
-                        color = 0x04;       // Red
-                    }
-                    else if (r == 255 && g == 0 && b == 255)
-                    {
-                        color = 0x05;       // Purple
-                    }
-                    else if (r == 255 && g == 255 && b == 0)
-                    {
-                        color = 0x06;       // Yellow
-                    }
-                    else if (r == 255 && g == 255 && b == 255)
-                    {
-                        color = 0x07;       // White
-                    }
-                    else
-                    {
-                        color = 0;          // Black
-                    }
-
-                    if (y >= MTRX_ROWS_SHOW)
-                    {
-                        int yy = y - MTRX_ROWS_SHOW;
-                        matrixData[yy, x] = (byte)((matrixData[yy, x] & 0x0F) | (color << 4));
-                    }
-                    else
-                    {
-                        matrixData[y, x] = (byte)((matrixData[y, x] & 0xF0) | color);
-                    }
-                }
-            }
-
-            return matrixData;
-        }
 
         /// <summary>
         /// 進捗のUIを更新
@@ -780,6 +572,7 @@ namespace JigApp
                             return ex.Message;
                         }
 
+                        int delayedBatchCount = 0;
                         int remainNum = allMatrixData.Length / MTRX_DATA_SIZE; // 残り枚数
                         int sentNum = 0; // 送信済み枚数
                         while (remainNum > 0) // 残り枚数が0より大きい場合
@@ -787,9 +580,8 @@ namespace JigApp
                             // 送信枚数を計算
                             int sendNum = (remainNum > MTRX_SEND_MAX) ? MTRX_SEND_MAX : remainNum;
 
-                            byte[] sendMatrixData = new byte[MTRX_DATA_SIZE * sendNum]; // 送信枚数分のマトリクスデータ
-
-                            // sendMatrixDataにデータを格納
+                            // 送信枚数分のマトリクスデータをバッチ単位で1度だけ作成（リトライ時の再確保を防ぎ、GC負荷を極小化）
+                            byte[] sendMatrixData = new byte[MTRX_DATA_SIZE * sendNum]; 
                             Array.Copy(
                                 allMatrixData,            // 全マトリクスデータ(コピー元)
                                 sentNum * MTRX_DATA_SIZE, // コピー開始位置
@@ -798,23 +590,74 @@ namespace JigApp
                                 sendNum * MTRX_DATA_SIZE  // コピーする要素数
                             );
 
-                            // 「マトリクスデータ更新」コマンドを送信
-                            strErr = Program.PrpJigCmd.SendCmd_UpdateMatrix(sendMatrixData);
-                            if (strErr == null)
-                            {
-                                remainNum -= sendNum; // 残り枚数を更新
-                                sentNum += sendNum;   // 送信済み枚数を更新
-                            }
-                            else if (strErr == "A failure response was received from the microcontroller. (There is no space in the buffer)")
-                            {
-                                // バッファが空くまで少し待機してリトライ(ビジーウェイトによるCPU100%占有と通信連打を防止)
-                                Thread.Sleep(100);
-                            }
-                            else
-                            {
-                                return strErr;
+                            // 送信完了するまで内側でリトライループ
+                            System.Diagnostics.Stopwatch swBatch = new System.Diagnostics.Stopwatch();
+                            int retryCount = 0;
+                            swBatch.Start();
+
+                             while (true)
+                             {
+                                 // まずバッファの空き状況を確認 (0バイト要求のため極めて軽量)
+                                 string strBufErr = Program.PrpJigCmd.SendCmd_GetBufStatus();
+                                 if (strBufErr == "A failure response was received from the microcontroller. (There is no space in the buffer)")
+                                 {
+                                     retryCount++;
+                                     // 1フレーム再生時間(33.3ms)に近い30ms待機し、USB通信の無駄な連打とマイコンCPUの負荷を防止
+                                     Thread.Sleep(30);
+                                     continue; // バッファが空くまで待つ
+                                 }
+                                 else if (strBufErr != null)
+                                 {
+                                     return strBufErr; // その他の通信エラー
+                                 }
+
+                                 System.Diagnostics.Stopwatch swSend = System.Diagnostics.Stopwatch.StartNew();
+                                 // バッファに空きがあるので、「マトリクスデータ更新」コマンドを送信 (確実に成功する)
+                                 strErr = Program.PrpJigCmd.SendCmd_UpdateMatrix(sendMatrixData);
+                                 swSend.Stop();
+
+                                if (strErr == null)
+                                {
+                                    swBatch.Stop();
+                                    System.Diagnostics.Debug.WriteLine($"[Profile] Batch {sentNum/MTRX_SEND_MAX}: Sent {sendNum} frames. TotalTime={swBatch.ElapsedMilliseconds}ms (LastSend={swSend.ElapsedMilliseconds}ms), Retries={retryCount}");
+                                    
+                                    // 1フレームあたり33.3msで消費される。1バッチ(sendNum)の消費時間を超えているか判定。
+                                    double limitTime = sendNum * (1000.0 / 30.0);
+                                    double effectiveTime = swBatch.ElapsedMilliseconds - (retryCount * 30);
+                                    if (effectiveTime > limitTime)
+                                    {
+                                        delayedBatchCount++;
+                                    }
+
+                                    remainNum -= sendNum; // 残り枚数を更新
+                                    sentNum += sendNum;   // 送信済み枚数を更新
+                                    break; // 送信成功、次のバッチへ
+                                }
+                                else if (strErr == "A failure response was received from the microcontroller. (There is no space in the buffer)")
+                                {
+                                    retryCount++;
+                                    // 1フレーム再生時間(33.3ms)に近い30ms待機し、USB通信の無駄な連打とマイコンCPUの負荷を防止
+                                    Thread.Sleep(30);
+                                }
+                                else
+                                {
+                                    return strErr;
+                                }
                             }
                         }
+
+                        // 判定結果を英語でデバッグ出力およびアプリログに表示
+                        if (delayedBatchCount > 0)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Profile] Result: Processing DELAYED. {delayedBatchCount} batches experienced delays.");
+                            FormMain.Inst.Invoke((Action)(() => FormMain.Inst.AppendAppLogText(true, $"Processing warning: {delayedBatchCount} batches experienced transmission delays.")));
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine("[Profile] Result: Processing SUCCESS. All data was sent in time.");
+                            FormMain.Inst.Invoke((Action)(() => FormMain.Inst.AppendAppLogText(false, "Processing success: All data was sent in time.")));
+                        }
+
                         return null;
                     });
 

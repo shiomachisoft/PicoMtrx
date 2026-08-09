@@ -1,6 +1,8 @@
 // Copyright © 2025 Shiomachi Software. All rights reserved.
 #include "Common.h"
 
+extern int stdio_usb_in_chars(char *buf, int length);
+
 // [ファイルスコープ変数]
 static ST_FRM_RECV_DATA_INFO f_stRecvDataInf = {0}; // USBの受信データ情報
 
@@ -29,113 +31,139 @@ static ST_FRM_REQ_FRAME *FRM_RecvReqFrame(void) {
         NULL; // 抽出が完了した要求フレーム(未完了の場合はNULL)
     ST_FRM_RECV_DATA_INFO *pstRecv = &f_stRecvDataInf;
 
-    // [要求フレームの受信タイムアウト判定]
-    if (pstRecv->reqFrmSize > 0) {     // 要求フレームのヘッダは受信済みの場合
-        if (TMR_IsRecvTimeout()          // タイムアウトが発生した場合
-            || (!tud_cdc_connected())) { // 未接続の場合
-            pstRecv->reqFrmSize = 0;       // フレーム破棄
-        }
-    }
-
-    // [USBの受信データ1byte取り出し]
-    ret = getchar_timeout_us(0);
-    if (PICO_ERROR_TIMEOUT == ret) { // USB受信データが無い場合
-        return pstReqFrm;              // NULLを返す
-    }
-    data = (UCHAR)ret;
-
-    // [USBの受信データから要求フレームを作成する]
-
-    // ヘッダ
-    if (pstRecv->reqFrmSize == offsetof(ST_FRM_REQ_FRAME, header)) {
-        if (FRM_HEADER_REQ == data) {
-            // 要求ヘッダの場合
-
-            pstRecv->recved_dataSize = 0; // データサイズ部の受信済みサイズを初期化
-            pstRecv->recved_checksum = 0; // チェックサム部の受信済みサイズを初期化
-            pstRecv->p = (UCHAR *)&pstRecv
-                             ->stReqFrm; // 要求フレームデータ格納先ポインタを初期化
-            *pstRecv->p++ = data;        // ヘッダを格納
-            pstRecv->reqFrmSize++;       // 要求フレームの受信済みサイズ+1
-
-            // タイムアウト監視用のタイマカウントをクリア
-            TMR_ClearRecvTimeout();
-        } else {
-            // 要求ヘッダではない場合
-
-            pstRecv->reqFrmSize = 0; // フレーム破棄
-        }
-    }
-    // シーケンス番号
-    else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, seqNo) +
-                                       sizeof(pstRecv->stReqFrm.seqNo)) {
-        *pstRecv->p++ = data;  // シーケンス番号を格納
-        pstRecv->reqFrmSize++; // 要求フレームの受信済みサイズ+1
-    }
-    // コマンド
-    else if (pstRecv->reqFrmSize <
-             offsetof(ST_FRM_REQ_FRAME, cmd) + sizeof(pstRecv->stReqFrm.cmd)) {
-        *pstRecv->p++ = data;  // コマンドを格納
-        pstRecv->reqFrmSize++; // 要求フレームの受信済みサイズ+1
-    }
-    // データサイズ
-    else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
-                                       sizeof(pstRecv->stReqFrm.dataSize)) {
-        *pstRecv->p++ = data;       // データサイズを格納
-        pstRecv->reqFrmSize++;      // 要求フレームの受信済みサイズ+1
-        pstRecv->recved_dataSize++; // データサイズ部の受信済みサイズ+1
-        if (pstRecv->recved_dataSize ==
-            sizeof(
-                pstRecv->stReqFrm.dataSize)) { // データサイズ部の受信が完了した場合
-            if (pstRecv->stReqFrm.dataSize >
-                FRM_REQ_DATA_MAX_SIZE) { // データサイズが最大値を超えている場合
-                pstRecv->reqFrmSize = 0;   // フレーム破棄
+    // USB受信バッファにあるすべてのデータを一回で処理するループ
+    while (1) {
+        // [要求フレームの受信タイムアウト判定]
+        if (pstRecv->reqFrmSize > 0) {     // 要求フレームのヘッダは受信済みの場合
+            if (TMR_IsRecvTimeout()          // タイムアウトが発生した場合
+                || (!tud_cdc_connected())) { // 未接続の場合
+                pstRecv->reqFrmSize = 0;       // フレーム破棄
             }
         }
-    }
-    // データ部
-    else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
-                                       sizeof(pstRecv->stReqFrm.dataSize) +
-                                       pstRecv->stReqFrm.dataSize) {
-        *pstRecv->p++ = data;  // データ部を格納
-        pstRecv->reqFrmSize++; // 要求フレームの受信済みサイズ+1
-    }
-    // チェックサム
-    else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
-                                       sizeof(pstRecv->stReqFrm.dataSize) +
-                                       pstRecv->stReqFrm.dataSize +
-                                       sizeof(pstRecv->stReqFrm.checksum)) {
-        // データ部:aData[]メンバのサイズがFRM_REQ_DATA_MAX_SIZE固定のため、pstRecv->recved_checksumのような変数や下記の処理が必要
-        if (!pstRecv->recved_checksum) {
-            pstRecv->p =
-                (UCHAR *)&pstRecv->stReqFrm
-                    .checksum; // 格納先ポインタはチェックサム部のアドレスを指す
+
+        // [USBの受信データ1byte取り出し]
+        ret = getchar_timeout_us(0);
+        if (PICO_ERROR_TIMEOUT == ret) { // USB受信データが無い場合
+            break; // 処理できるデータがなくなったらループを抜けて戻る
         }
-        *pstRecv->p++ = data;       // チェックサムを格納
-        pstRecv->reqFrmSize++;      // 要求フレームの受信済みサイズ+1
-        pstRecv->recved_checksum++; // チェックサム部の受信済みサイズ+1
-    } else {
-        // 無処理
-    }
+        data = (UCHAR)ret;
 
-    if (pstRecv->reqFrmSize >= offsetof(ST_FRM_REQ_FRAME, dataSize) +
-                                   sizeof(pstRecv->stReqFrm.dataSize) +
-                                   pstRecv->stReqFrm.dataSize +
-                                   sizeof(pstRecv->stReqFrm.checksum)) {
-        // 要求フレームの抽出が完了した場合
+        // [USBの受信データから要求フレームを作成する]
 
-        pstRecv->reqFrmSize = 0; // 要求フレームの受信済みサイズを初期化
+        // ヘッダ
+        if (pstRecv->reqFrmSize == offsetof(ST_FRM_REQ_FRAME, header)) {
+            if (FRM_HEADER_REQ == data) {
+                // 要求ヘッダの場合
 
-        // [チェックサム検査]
-        // 要求フレームのサイズ(チェックサム除く)を計算
-        reqFrmSize = offsetof(ST_FRM_REQ_FRAME, dataSize) +
-                     sizeof(pstRecv->stReqFrm.dataSize) +
-                     pstRecv->stReqFrm.dataSize;
-        // チェックサム検査を実行
-        if (CMN_Checksum(&pstRecv->stReqFrm, pstRecv->stReqFrm.checksum,
-                         reqFrmSize)) {
-            // チェックサム検査に合格した場合
-            pstReqFrm = &pstRecv->stReqFrm; // 戻り値に要求フレームのポインタを設定
+                pstRecv->recved_dataSize = 0; // データサイズ部の受信済みサイズを初期化
+                pstRecv->recved_checksum = 0; // チェックサム部の受信済みサイズを初期化
+                pstRecv->p = (UCHAR *)&pstRecv
+                                 ->stReqFrm; // 要求フレームデータ格納先ポインタを初期化
+                *pstRecv->p++ = data;        // ヘッダを格納
+                pstRecv->reqFrmSize++;       // 要求フレームの受信済みサイズ+1
+
+                // タイムアウト監視用のタイマカウントをクリア
+                TMR_ClearRecvTimeout();
+            } else {
+                // 要求ヘッダではない場合
+
+                pstRecv->reqFrmSize = 0; // フレーム破棄
+            }
+        }
+        // シーケンス番号
+        else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, seqNo) +
+                                           sizeof(pstRecv->stReqFrm.seqNo)) {
+            *pstRecv->p++ = data;  // シーケンス番号を格納
+            pstRecv->reqFrmSize++; // 要求フレームの受信済みサイズ+1
+        }
+        // コマンド
+        else if (pstRecv->reqFrmSize <
+                 offsetof(ST_FRM_REQ_FRAME, cmd) + sizeof(pstRecv->stReqFrm.cmd)) {
+            *pstRecv->p++ = data;  // コマンドを格納
+            pstRecv->reqFrmSize++; // 要求フレームの受信済みサイズ+1
+        }
+        // データサイズ
+        else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                                           sizeof(pstRecv->stReqFrm.dataSize)) {
+            *pstRecv->p++ = data;       // データサイズを格納
+            pstRecv->reqFrmSize++;      // 要求フレームの受信済みサイズ+1
+            pstRecv->recved_dataSize++; // データサイズ部の受信済みサイズ+1
+            if (pstRecv->recved_dataSize ==
+                sizeof(
+                    pstRecv->stReqFrm.dataSize)) { // データサイズ部の受信が完了した場合
+                if (pstRecv->stReqFrm.dataSize >
+                    FRM_REQ_DATA_MAX_SIZE) { // データサイズが最大値を超えている場合
+                    pstRecv->reqFrmSize = 0;   // フレーム破棄
+                }
+            }
+        }
+        // データ部
+        else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                                           sizeof(pstRecv->stReqFrm.dataSize) +
+                                           pstRecv->stReqFrm.dataSize) {
+            // まず現在取得済みの1バイトを格納
+            *pstRecv->p++ = data;
+            pstRecv->reqFrmSize++;
+
+            // 残りのデータ部がある場合、一括で読み出し
+            ULONG remaining_data = (offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                                    sizeof(pstRecv->stReqFrm.dataSize) +
+                                    pstRecv->stReqFrm.dataSize) - pstRecv->reqFrmSize;
+            if (remaining_data > 0) {
+                int read_bytes = stdio_usb_in_chars((char *)pstRecv->p, remaining_data);
+                if (read_bytes > 0) {
+                    pstRecv->p += read_bytes;
+                    pstRecv->reqFrmSize += read_bytes;
+                }
+            }
+            continue; // 次の判定ループへ進む
+        }
+        // チェックサム
+        else if (pstRecv->reqFrmSize < offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                                           sizeof(pstRecv->stReqFrm.dataSize) +
+                                           pstRecv->stReqFrm.dataSize +
+                                           sizeof(pstRecv->stReqFrm.checksum)) {
+            // データ部:aData[]メンバのサイズがFRM_REQ_DATA_MAX_SIZE固定のため、pstRecv->recved_checksumのような変数や下記の処理必要
+            if (!pstRecv->recved_checksum) {
+                pstRecv->p = (UCHAR *)&pstRecv->stReqFrm.checksum; // 格納先ポインタはチェックサム部のアドレスを指す
+            }
+            // まず現在取得済みの1バイトを格納
+            *pstRecv->p++ = data;
+            pstRecv->reqFrmSize++;
+            pstRecv->recved_checksum++;
+
+            // 残りのチェックサムがある場合、一括で読み出し
+            ULONG remaining_checksum = sizeof(pstRecv->stReqFrm.checksum) - pstRecv->recved_checksum;
+            if (remaining_checksum > 0) {
+                int read_bytes = stdio_usb_in_chars((char *)pstRecv->p, remaining_checksum);
+                if (read_bytes > 0) {
+                    pstRecv->p += read_bytes;
+                    pstRecv->reqFrmSize += read_bytes;
+                    pstRecv->recved_checksum += read_bytes;
+                }
+            }
+
+            // チェックサムの受信が完了し、フレームが完成したか判定
+            if (pstRecv->reqFrmSize >= offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                                           sizeof(pstRecv->stReqFrm.dataSize) +
+                                           pstRecv->stReqFrm.dataSize +
+                                           sizeof(pstRecv->stReqFrm.checksum)) {
+                // 要求フレームの抽出が完了した場合
+                pstRecv->reqFrmSize = 0; // 要求フレームの受信済みサイズを初期化
+
+                // [チェックサム検査]
+                reqFrmSize = offsetof(ST_FRM_REQ_FRAME, dataSize) +
+                             sizeof(pstRecv->stReqFrm.dataSize) +
+                             pstRecv->stReqFrm.dataSize;
+                // チェックサム検査を実行（Common.cで常時パス）
+                if (CMN_Checksum(&pstRecv->stReqFrm, pstRecv->stReqFrm.checksum, reqFrmSize)) {
+                    pstReqFrm = &pstRecv->stReqFrm; // 戻り値に要求フレームのポインタを設定
+                }
+                break; // 次のパケットの最初の1バイトを誤って吸い出さないように直ちにループを抜ける
+            }
+            continue; // 次の判定ループへ進む
+        } else {
+            // 無処理
         }
     }
 

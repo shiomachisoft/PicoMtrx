@@ -28,7 +28,6 @@
 #define _PICO_STDIO_USB_TUSB_CONFIG_H
 
 #include "pico/stdio_usb.h"
-#include "RGBMatrixConfig.h"
 
 #define CFG_TUSB_RHPORT0_MODE (OPT_MODE_DEVICE)
 
@@ -37,7 +36,7 @@
 // CDC FIFO size of TX and RX
 
 #ifndef CFG_TUD_CDC_RX_BUFSIZE
-#define CFG_TUD_CDC_RX_BUFSIZE (MTRX_RECV_MAX_NUM * MTRX_DATA_SIZE + 1024)
+#define CFG_TUD_CDC_RX_BUFSIZE 8192
 #endif
 
 #ifndef CFG_TUD_CDC_TX_BUFSIZE

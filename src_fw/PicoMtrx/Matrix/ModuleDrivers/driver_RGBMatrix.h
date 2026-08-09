@@ -59,6 +59,14 @@
 
 
 
+#include "Type.h"
+
+typedef struct {
+    UCHAR r;
+    UCHAR g;
+    UCHAR b;
+} ST_COLOR_RGB888;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

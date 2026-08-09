@@ -19,7 +19,8 @@ typedef enum _E_FRM_HEADER {
 typedef enum _E_FRM_CMD {
     CMD_GET_FW_INFO = 0x0001,       // FW情報取得 
     CMD_CLEAR_MTRX,                 // マトリクスデータクリア
-    CMD_UPDATE_MTRX                 // マトリクスデータ更新
+    CMD_UPDATE_MTRX,                // マトリクスデータ更新
+    CMD_GET_BUF_STATUS              // バッファステータス取得
 } E_FRM_CMD;                        
 
 // フレーム中のエラーコード

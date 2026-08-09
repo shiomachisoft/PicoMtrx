@@ -1,0 +1,45 @@
+.program rgb_matrix
+.side_set 1
+
+; 8ビットのデータをOUTピン（GPIO 2〜9）にシフトアウトし、CLKをLowに駆動。
+; その後、CLKをHighに駆動。
+; OUTピン: GPIO 2..9
+; Side-setピン: GPIO 11 (CLK)
+
+.wrap_target
+    out pins, 8        side 0
+    nop                side 1
+.wrap
+
+% c-sdk {
+static inline void rgb_matrix_program_init(PIO pio, uint sm, uint offset, uint pin_base, uint pin_count, uint clk_pin) {
+    pio_sm_config c = rgb_matrix_program_get_default_config(offset);
+
+    // ステートマシンのOUTピンを設定
+    sm_config_set_out_pins(&c, pin_base, pin_count);
+
+    // CLKピンをside-setとして設定
+    sm_config_set_sideset_pins(&c, clk_pin);
+
+    // シフト方向を右（LSBファースト）に設定、オートプル有効、閾値は32
+    sm_config_set_out_shift(&c, true, true, 32);
+
+    // すべてのOUTピンを出力方向に設定
+    for (uint i = 0; i < pin_count; i++) {
+        pio_gpio_init(pio, pin_base + i);
+    }
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_base, pin_count, true);
+
+    // CLKピンを出力方向に設定
+    pio_gpio_init(pio, clk_pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, clk_pin, 1, true);
+
+    // クロックデバイダ（分周比）を設定
+    // システムクロックは125MHz。PIOクロック10MHzで、5MHzのピクセルクロック（1ピクセルあたり2サイクル）が得られます。
+    sm_config_set_clkdiv_int_frac(&c, 50, 0);
+
+    // 設定をロードし、ステートマシンを開始
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

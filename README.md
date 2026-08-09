@@ -1,6 +1,6 @@
 # PicoMtrx
 
-Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video data on a dot matrix LED (WAVESHARE-20591).
+Firmware for Raspberry Pi Pico and a PC application for displaying video data converted from mp4 files on a dot matrix LED (WAVESHARE-20591).
 
 **[Demo Video](https://www.youtube.com/watch?v=Xb-uuDCgQQs)**<br>
 <a href="https://www.youtube.com/watch?v=Xb-uuDCgQQs">
@@ -20,13 +20,12 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 
 ## Specifications
 
-### WAVESHARE-20591 Specifications
+### WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32) Specifications
 * **Resolution:** 64x32 dots
-* **Color Depth:** 2 levels per RGB channel
-* **Feature:** Pico can be attached directly
+* **Color Depth:** 2 levels per RGB channel (Hardware specification)
 
 ### FW (Firmware) Specifications
-* **Screen Refresh Rate:** 30Hz
+* **LED Matrix Display:** Achieves 4096 colors at 30fps using PIO (16 levels per RGB channel).
 
 ## System Architecture
 
@@ -44,19 +43,20 @@ Firmware for Raspberry Pi Pico and a PC application for displaying mp4 video dat
 
 ## Usage
 
-1. Attach the Pico to the WAVESHARE-20591.
-2. Connect the WAVESHARE-20591 and the PC with a USB cable.
-3. Turn ON the power switch of the WAVESHARE-20591.
-4. Launch "PicoMtrxApp.exe" on the PC.
-5. Select the Pico's COM port number on the screen and click the "connect" button.
-6. Click the "Open mtrx file" button and select "sample.mtrx" to display the sample video on the dot matrix LED.
+1. Attach the Pico to the WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32).  
+2. Connect the WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32) and the PC with a USB cable.  
+3. Turn ON the power switch of the WAVESHARE-20591.  
+4. Launch "PicoMtrxApp.exe" on the PC.  
+5. Select the Pico's COM port number on the screen and click the "connect" button.  
+6. Click the "Open mtrx file" button and select "sample.mtrx" to display the sample video on the dot matrix LED.  
 
 ## How to Create an mtrx File
 
 You can create a matrix data file (.mtrx file) from your own mp4 video.
 
-1. Click the "Convert mp4 to mtrx file" button in the app and select the mp4 file you want to convert.
-2. An ".mtrx" file will be created in the same folder as the mp4 file.
+1. Select the center crop method for the video using the combo box.  
+2. Click the "Convert mp4 to mtrx file" button in the app and select the mp4 file you want to convert.
+3. An ".mtrx" file will be created in the same folder as the mp4 file.
 
 > **Note**
 > Since the WAVESHARE-20591 has limited dot count and color depth, videos with simple graphics are recommended.

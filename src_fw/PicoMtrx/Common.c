@@ -18,7 +18,6 @@ bool CMN_Enqueue(ULONG iQue, PVOID pData)
 
     if ((pstQue->head == (pstQue->tail + 1) % pstQue->max)) {
         // キューが満杯の場合
-
         // 無処理
     } else {
         // キューイング

@@ -8,6 +8,7 @@ static ULONG f_iQue = CMN_QUE_KIND_MTRX_RECV_A; // キューのインデック�
 static void CMD_ExecReqCmd_GetFwInfo(ST_FRM_REQ_FRAME *pstReqFrm);
 static void CMD_ExecReqCmd_ClearMtrx(ST_FRM_REQ_FRAME *pstReqFrm);
 static void CMD_ExecReqCmd_UpdateMtrx(ST_FRM_REQ_FRAME *pstReqFrm);
+static void CMD_ExecReqCmd_GetBufStatus(ST_FRM_REQ_FRAME *pstReqFrm);
 
 // 要求コマンドの実行
 void CMD_ExecReqCmd(ST_FRM_REQ_FRAME *pstReqFrm)
@@ -25,6 +26,10 @@ void CMD_ExecReqCmd(ST_FRM_REQ_FRAME *pstReqFrm)
     // マトリクスデータ更新コマンド
     case CMD_UPDATE_MTRX:
         CMD_ExecReqCmd_UpdateMtrx(pstReqFrm);
+        break;                  
+    // バッファステータス取得コマンド
+    case CMD_GET_BUF_STATUS:
+        CMD_ExecReqCmd_GetBufStatus(pstReqFrm);
         break;                  
     default:
         // 無処理
@@ -119,4 +124,23 @@ static void CMD_ExecReqCmd_UpdateMtrx(ST_FRM_REQ_FRAME *pstReqFrm)
 
     // 応答フレームを送信        
     FRM_MakeAndSendResFrm(pstReqFrm->seqNo, pstReqFrm->cmd, errCode, 0, NULL); 
+}
+
+// バッファステータス取得コマンドの実行
+static void CMD_ExecReqCmd_GetBufStatus(ST_FRM_REQ_FRAME *pstReqFrm)
+{
+    USHORT errCode = FRM_ERR_SUCCESS;
+
+    // データサイズをチェック
+    if (pstReqFrm->dataSize != 0) {
+        errCode = FRM_ERR_DATA_SIZE; // データサイズが不正
+    }
+    else { // 正常系
+        if (!CMN_IsQueueEmpty(f_iQue)) {
+            errCode = FRM_ERR_BUF_NOT_ENOUGH; // バッファに空きがない
+        }
+    }
+
+    // 応答フレームを送信
+    FRM_MakeAndSendResFrm(pstReqFrm->seqNo, pstReqFrm->cmd, errCode, 0, NULL);
 }

@@ -2,15 +2,31 @@
 #include "Common.h"
 
 // [define]
-// #define MTRX_DEBUG
 
-#define MTRX_FLUSH_INTERVAL 20 // ダイナミック点灯の間隔(us)
-#define MTRX_PWM_CYCLE 5 // PWM周期
-#define MTRX_RED_DUTY_PERCENT 20 // 赤の点灯比率 (%)。設定の刻み幅は10%刻み。
-#define MTRX_GREEN_DUTY_PERCENT 50 // 緑の点灯比率 (%)。設定の刻み幅は10%刻み。
+#define MTRX_PWM_CYCLE 16 // PWM周期
+#define MTRX_RED_DUTY_PERCENT 20 // 赤の点灯比率 (%)。設定の刻み幅は MTRX_DUTY_STEP_PERCENT %刻み。
+#define MTRX_GREEN_DUTY_PERCENT 50 // 緑の点灯比率 (%)。設定の刻み幅は MTRX_DUTY_STEP_PERCENT %刻み。
+#define MTRX_DUTY_STEP_PERCENT  10  // Duty比設定の刻み幅（%）および分散テーブルのインデックス変換係数
+#define MTRX_DUTY_PATTERNS_MAX  10  // 分散テーブルの最大インデックス値（100%分）
+#define MTRX_GREEN_PHASE_SHIFT  (MTRX_PWM_CYCLE / 2) // 赤と緑のONタイミングの重なりを避けるための緑の位相シフト量（半周期）
+
+// MTRX_DUTY_STEP_PERCENT %刻みのDuty比に対する MTRX_PWM_CYCLE ステップの ON/OFF分散テーブル (0: OFF, 1: ON)
+static const uint8_t f_pwm_patterns[MTRX_DUTY_PATTERNS_MAX + 1][MTRX_PWM_CYCLE] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // 0%
+    {1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}, // 10%
+    {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, // 20%
+    {1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1}, // 30%
+    {1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1}, // 40%
+    {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0}, // 50%
+    {1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0}, // 60%
+    {1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0}, // 70%
+    {1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1}, // 80%
+    {1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1}, // 90%
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}  // 100%
+};
 
 // [外部変数のextern]
-extern unsigned char (*g_display_rgb)[Matrix_COLS];
+extern ST_COLOR_RGB888 (*g_display_rgb)[Matrix_COLS];
 extern uint8_t g_CS_cnt;
 
 // [ファイルスコープ変数]
@@ -25,24 +41,29 @@ void MTRX_Main(void) {
     uint64_t refreshCnt; // 現在のリフレッシュ回数
     PVOID pMtrxData;     // マトリクスデータ
 
-    if (0 == g_CS_cnt) {
+    if (((Matrix_ROWS_SHOW - 1) == g_CS_cnt) || !f_isDequeuedOnce) {
         // フレーム間PWM用のカウンタ更新
         static uint32_t pwm_cnt = 0;
         pwm_cnt++;
         if (pwm_cnt >= MTRX_PWM_CYCLE) {
             pwm_cnt = 0;
         }
-        // MTRX_RED_DUTY_PERCENT に応じて赤の出力を有効/無効化
-        uint32_t threshold = (MTRX_RED_DUTY_PERCENT * MTRX_PWM_CYCLE) / 100;
-        if (pwm_cnt < threshold) {
+
+        // 分散テーブルに基づき赤の有効/無効化を決定
+        uint32_t red_idx = MTRX_RED_DUTY_PERCENT / MTRX_DUTY_STEP_PERCENT;
+        if (red_idx > MTRX_DUTY_PATTERNS_MAX) red_idx = MTRX_DUTY_PATTERNS_MAX;
+        if (f_pwm_patterns[red_idx][pwm_cnt]) {
             HAL_RGBMatrixDeviceSetRedDisable(false);
         } else {
             HAL_RGBMatrixDeviceSetRedDisable(true);
         }
 
-        // MTRX_GREEN_DUTY_PERCENT に応じて緑の出力を有効/無効化
-        uint32_t green_threshold = (MTRX_GREEN_DUTY_PERCENT * MTRX_PWM_CYCLE) / 100;
-        if (pwm_cnt < green_threshold) {
+        // 分散テーブルに基づき緑の有効/無効化を決定
+        // 赤と緑のONタイミングの重なりを避けるため、緑は位相を半周期（MTRX_GREEN_PHASE_SHIFT）ずらす
+        uint32_t green_idx = MTRX_GREEN_DUTY_PERCENT / MTRX_DUTY_STEP_PERCENT;
+        if (green_idx > MTRX_DUTY_PATTERNS_MAX) green_idx = MTRX_DUTY_PATTERNS_MAX;
+        uint32_t green_pwm_cnt = (pwm_cnt + MTRX_GREEN_PHASE_SHIFT) % MTRX_PWM_CYCLE;
+        if (f_pwm_patterns[green_idx][green_pwm_cnt]) {
             HAL_RGBMatrixDeviceSetGreenDisable(false);
         } else {
             HAL_RGBMatrixDeviceSetGreenDisable(true);
@@ -56,7 +77,7 @@ void MTRX_Main(void) {
             // マトリクスデータをデキュー(コピー無し)
             pMtrxData = CMN_DequeueWithoutCopy(f_iQue);
             if (NULL != pMtrxData) {
-                g_display_rgb = (unsigned char (*)[Matrix_COLS])pMtrxData; // デキューしたマトリクスデータ
+                g_display_rgb = (ST_COLOR_RGB888 (*)[Matrix_COLS])pMtrxData; // デキューしたマトリクスデータ
                 f_isDequeuedOnce = true; // 一度でもデキューした
                 f_dequeueCnt++;          // デキュー回数
                 if (f_dequeueCnt >= MTRX_RECV_MAX_NUM) { // デキュー回数 >= キューイングできる最大枚数
@@ -74,19 +95,8 @@ void MTRX_Main(void) {
     }
 
     if (f_isDequeuedOnce) { // 一度でもデキューしたことがある場合
-                            // [デバッグ用]
-#ifdef MTRX_DEBUG
-        uint64_t prevCnt = f_prevRefreshCnt;   // 前回のリフレッシュ回数
-        uint64_t curCnt = TMR_GetRefreshCnt(); // 現在のリフレッシュ回数
-        if ((curCnt - prevCnt) > 1) {
-            // ここに来た場合はリフレッシュレートが30Hzより遅れている
-            volatile int a = 0;
-        }
-#endif
-
         // [ダイナミック点灯]
-        f_displayDevice->Flush(f_displayDevice); // ダイナミック点灯
-        busy_wait_us(MTRX_FLUSH_INTERVAL); // ダイナミック点灯の間隔の時間だけ待つ
+        f_displayDevice->Flush(f_displayDevice); // ダイナミック点灯 (関数内で点灯時間制御と消灯まで実行されます)
     }
 }
 

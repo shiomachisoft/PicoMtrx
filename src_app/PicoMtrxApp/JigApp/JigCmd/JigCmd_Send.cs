@@ -93,6 +93,20 @@ namespace JigLib
         }
 
         /// <summary>
+        /// 「バッファステータス取得」コマンドの要求を送信
+        /// </summary>
+        public string SendCmd_GetBufStatus()
+        {
+            byte[] aReqData = null;
+            byte[] aResData = null;
+            string strErrMsg;
+
+            strErrMsg = SendCmd(E_FRM_CMD.GET_BUF_STATUS, aReqData, out aResData);
+
+            return strErrMsg;
+        }
+
+        /// <summary>
         /// 要求フレームを送信
         /// </summary>
         private string SendCmd(E_FRM_CMD eCmd, byte[] aReqData, out byte[] aResData, int resTimeout = FRM_RES_TIMEOUT)
