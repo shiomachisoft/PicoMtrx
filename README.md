@@ -1,7 +1,7 @@
 # PicoMtrx
 
-Raspberry Pi Pico firmware and a PC application for displaying MP4 videos on a dot-matrix LED display: [WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32)](https://www.waveshare.com/pico-rgb-matrix-p3-64x32.htm).
-* Achieves 4096 colors at 30fps using PIO (16 levels per RGB channel).
+Raspberry Pi Pico firmware and a PC application for displaying MP4 videos on a dot-matrix LED display: [WAVESHARE-20591(Pico-RGB-Matrix-P3-64x32)](https://www.waveshare.com/pico-rgb-matrix-p3-64x32.htm).  
+*Achieves 4096 colors at 30fps using PIO (16 levels per RGB channel).
 
 **[Demo Video](https://www.youtube.com/shorts/RfwKbU6vR_0)**<br>
 <a href="https://www.youtube.com/shorts/RfwKbU6vR_0">
